@@ -1,0 +1,32 @@
+# Compiled objects and binaries
+/build/*
+!/build/CMakeLists.txt
+*.o
+*.so
+*.exe
+*.dll
+*.dylib
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+*.make
+*.cmake
+
+# Ignore various system files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Package files
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
