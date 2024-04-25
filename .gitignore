@@ -1,6 +1,5 @@
 # Compiled objects and binaries
-/build/*
-!/build/CMakeLists.txt
+/build/
 *.o
 *.so
 *.exe
