@@ -1,41 +1,46 @@
 cmake_minimum_required(VERSION 3.15)
-project(SerialNetworkBridge)
+project(SerialNetworkBridge LANGUAGES CXX)
 
+# Set the C++ standard for the project
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Find Boost libraries
 find_package(Boost 1.65 REQUIRED COMPONENTS system)
 
-# Include directories
-include_directories(${Boost_INCLUDE_DIR})
-include_directories("include")
-
+# Fetch Google Test
 include(FetchContent)
 FetchContent_Declare(
   googletest
-  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG release-1.10.0  # Prefer using tagged releases where possible
 )
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)  # Use the MSVC runtime library settings
 FetchContent_MakeAvailable(googletest)
 
-# Define the server executable
+# Define the executable for the server
 add_executable(serial_server src/server.cpp)
-target_link_libraries(serial_server ${Boost_LIBRARIES} pthread)
+target_include_directories(serial_server PRIVATE ${Boost_INCLUDE_DIRS})
+target_link_libraries(serial_server PRIVATE
+  Boost::system
+  pthread
+)
 
-# Define the client executable
+# Define the executable for the client
 add_executable(serial_client src/client.cpp)
-target_link_libraries(serial_client ${Boost_LIBRARIES} pthread)
+target_include_directories(serial_client PRIVATE ${Boost_INCLUDE_DIRS})
+target_link_libraries(serial_client PRIVATE
+  Boost::system
+  pthread
+)
 
+# Enable testing
 enable_testing()
 
-add_executable(
-  test_app
-  tests/test_server.cpp
-)
-target_link_libraries(
-  test_app
+# Add a test executable
+add_executable(test_app tests/test_server.cpp)
+target_link_libraries(test_app PRIVATE
   GTest::gtest_main
 )
 
