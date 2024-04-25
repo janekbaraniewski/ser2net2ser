@@ -1,23 +1,27 @@
 cmake_minimum_required(VERSION 3.15)
 project(SerialNetworkBridge LANGUAGES CXX)
 
-# Set the C++ standard for the project
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Find Boost libraries
 find_package(Boost 1.65 REQUIRED COMPONENTS system)
 
-# Fetch Google Test
 include(FetchContent)
 FetchContent_Declare(
   googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG release-1.10.0  # Prefer using tagged releases where possible
+  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
 )
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)  # Use the MSVC runtime library settings
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
+
+if(TARGET GTest::gtest_main)
+  message(STATUS "GTest::gtest_main found")
+else()
+  message(FATAL_ERROR "GTest::gtest_main not found")
+endif()
+
 
 # Define the executable for the server
 add_executable(serial_server src/server.cpp)
