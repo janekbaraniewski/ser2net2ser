@@ -3,7 +3,7 @@ BUILD_DIR = build
 clean:
 	@rm -rf ${BUILD_DIR}/*
 
-build:
+build: clean
 	@cmake -S . -B build
 	@cmake --build build
 

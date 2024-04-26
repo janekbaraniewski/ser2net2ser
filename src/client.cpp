@@ -1,11 +1,13 @@
 #include <iostream>
 #include <boost/asio.hpp>
+#include <boost/program_options.hpp>
 #include <array>
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
 
 using namespace boost::asio;
+using namespace boost::program_options;
 using ip::tcp;
 using std::cout;
 using std::cerr;
@@ -50,15 +52,12 @@ public:
 
 private:
     void do_read_write() {
-        // Asynchronous read from TCP socket
         socket_.async_read_some(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
             if (!ec) {
-                // Write to PTY master
                 if (write(master_fd_, buffer_.data(), length) < 0) {
                     cerr << "Write to PTY master failed" << endl;
                     return;
                 }
-                // Optionally echo back to TCP socket for full duplex operation
                 async_write(socket_, boost::asio::buffer(buffer_, length), [this](boost::system::error_code ec, std::size_t) {
                     if (!ec) {
                         do_read_write();
@@ -73,11 +72,29 @@ private:
     }
 };
 
-int main() {
+int main(int argc, char* argv[]) {
     try {
-        SerialClient client("127.0.0.1", 12345);  // Server IP and port
+        options_description desc{"Options"};
+        desc.add_options()
+            ("help,h", "Help screen")
+            ("server,s", value<std::string>()->default_value("127.0.0.1"), "Server IP address")
+            ("port,p", value<unsigned short>()->default_value(12345), "Server port");
+
+        variables_map vm;
+        store(parse_command_line(argc, argv, desc), vm);
+        notify(vm);
+
+        if (vm.count("help")) {
+            cout << desc << endl;
+            return 0;
+        }
+
+        std::string server_ip = vm["server"].as<std::string>();
+        unsigned short server_port = vm["port"].as<unsigned short>();
+
+        SerialClient client(server_ip, server_port);
         client.run();
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         cerr << "Exception: " << e.what() << "\n";
     }
     return 0;

@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find Boost libraries
-find_package(Boost 1.65 REQUIRED COMPONENTS system)
+find_package(Boost 1.65 REQUIRED COMPONENTS system program_options)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -28,14 +28,17 @@ add_executable(serial_server src/server.cpp)
 target_include_directories(serial_server PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(serial_server PRIVATE
   Boost::system
+  Boost::program_options
   pthread
 )
+
 
 # Define the executable for the client
 add_executable(serial_client src/client.cpp)
 target_include_directories(serial_client PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(serial_client PRIVATE
   Boost::system
+  Boost::program_options
   pthread
 )
 
