@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find Boost libraries
-find_package(Boost 1.65 REQUIRED COMPONENTS system program_options)
+find_package(Boost 1.65 REQUIRED COMPONENTS system program_options log_setup log date_time)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -22,6 +22,8 @@ else()
   message(FATAL_ERROR "GTest::gtest_main not found")
 endif()
 
+add_library(logging src/logging.cpp)
+target_link_libraries(logging Boost::log Boost::log_setup Boost::date_time)
 
 # Define the executable for the server
 add_executable(serial_server src/server.cpp)
@@ -29,6 +31,7 @@ target_include_directories(serial_server PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(serial_server PRIVATE
   Boost::system
   Boost::program_options
+  logging
   pthread
 )
 
@@ -39,6 +42,7 @@ target_include_directories(serial_client PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(serial_client PRIVATE
   Boost::system
   Boost::program_options
+  logging
   pthread
 )
 

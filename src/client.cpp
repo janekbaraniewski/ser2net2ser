@@ -1,10 +1,13 @@
 #include <iostream>
-#include <boost/asio.hpp>
-#include <boost/program_options.hpp>
 #include <array>
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
+
+#include <boost/asio.hpp>
+#include <boost/program_options.hpp>
+
+#include "logging.h"
 
 using namespace boost::asio;
 using namespace boost::program_options;
@@ -31,18 +34,21 @@ public:
         // Setup PTY
         master_fd_ = posix_openpt(O_RDWR | O_NOCTTY);
         if (master_fd_ == -1 || grantpt(master_fd_) != 0 || unlockpt(master_fd_) != 0) {
+            BOOST_LOG_TRIVIAL(error) << "Failed to open or configure PTY master";
             throw std::runtime_error("Failed to open or configure PTY master");
         }
 
         char* slave_name = ptsname(master_fd_);
         if (!slave_name) {
+            BOOST_LOG_TRIVIAL(error) << "Failed to get PTY slave name";
             throw std::runtime_error("Failed to get PTY slave name");
         }
         slave_fd_ = open(slave_name, O_RDWR);
         if (slave_fd_ == -1) {
+            BOOST_LOG_TRIVIAL(error) << "Failed to open PTY slave";
             throw std::runtime_error("Failed to open PTY slave");
         }
-        cout << "PTY setup completed. Slave device: " << slave_name << endl;
+        BOOST_LOG_TRIVIAL(info) << "PTY setup completed. Slave device: " << slave_name;
     }
 
     void run() {
@@ -55,24 +61,26 @@ private:
         socket_.async_read_some(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
             if (!ec) {
                 if (write(master_fd_, buffer_.data(), length) < 0) {
-                    cerr << "Write to PTY master failed" << endl;
+                    BOOST_LOG_TRIVIAL(error) << "Write to PTY master failed";
                     return;
                 }
                 async_write(socket_, boost::asio::buffer(buffer_, length), [this](boost::system::error_code ec, std::size_t) {
                     if (!ec) {
                         do_read_write();
                     } else {
-                        cerr << "Write back to TCP socket failed: " << ec.message() << endl;
+                        BOOST_LOG_TRIVIAL(error) << "Write back to TCP socket failed: " << ec.message();
                     }
                 });
             } else {
-                cerr << "Read error: " << ec.message() << endl;
+                BOOST_LOG_TRIVIAL(error) << "Read error: " << ec.message();
             }
         });
     }
 };
 
 int main(int argc, char* argv[]) {
+    init_logging();  // Initialize logging at the start of the main function
+
     try {
         options_description desc{"Options"};
         desc.add_options()
@@ -95,7 +103,7 @@ int main(int argc, char* argv[]) {
         SerialClient client(server_ip, server_port);
         client.run();
     } catch (const std::exception& e) {
-        cerr << "Exception: " << e.what() << "\n";
+        BOOST_LOG_TRIVIAL(error) << "Exception: " << e.what();
     }
     return 0;
 }
