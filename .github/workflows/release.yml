@@ -5,95 +5,94 @@ on:
     tags:
       - 'v*'
 
-jobs:
-  build-and-release:
-    runs-on: ${{ matrix.config.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          # Define combinations of operating systems and architectures
-          - {os: ubuntu-latest, arch: x64, server-artifact: serial_server_linux_x64, client-artifact: serial_client_linux_x64}
-          - {os: ubuntu-latest, arch: arm64, server-artifact: serial_server_linux_arm64, client-artifact: serial_client_linux_arm64}
-          - {os: windows-latest, arch: x64, server-artifact: serial_server_windows_x64.exe, client-artifact: serial_client_windows_x64.exe}
-          - {os: windows-latest, arch: arm64, server-artifact: serial_server_windows_arm64.exe, client-artifact: serial_client_windows_arm64.exe}
-          - {os: macos-latest, arch: x64, server-artifact: serial_server_mac_x64, client-artifact: serial_client_mac_x64}
-          - {os: macos-latest, arch: arm64, server-artifact: serial_server_mac_arm64, client-artifact: serial_client_mac_arm64}
+      jobs:
+        build-and-release:
+          runs-on: ${{ matrix.config.os }}
+          strategy:
+            fail-fast: false
+            matrix:
+              config:
+                - {os: ubuntu-latest, arch: x64, server-artifact: serial_server_linux_x64, client-artifact: serial_client_linux_x64}
+                - {os: ubuntu-latest, arch: arm64, server-artifact: serial_server_linux_arm64, client-artifact: serial_client_linux_arm64}
+                - {os: windows-latest, arch: x64, server-artifact: serial_server_windows_x64.exe, client-artifact: serial_client_windows_x64.exe}
+                - {os: windows-latest, arch: arm64, server-artifact: serial_server_windows_arm64.exe, client-artifact: serial_client_windows_arm64.exe}
+                - {os: macos-latest, arch: x64, server-artifact: serial_server_mac_x64, client-artifact: serial_client_mac_x64}
+                - {os: macos-latest, arch: arm64, server-artifact: serial_server_mac_arm64, client-artifact: serial_client_mac_arm64}
 
-    steps:
-    - uses: actions/checkout@v3
+          steps:
+          - uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.x'
+          - name: Set up Python
+            uses: actions/setup-python@v4
+            with:
+              python-version: '3.x'
 
-    - name: Install dependencies (Ubuntu)
-      if: startsWith(matrix.config.os, 'ubuntu')
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libboost-all-dev
+          - name: Install dependencies (Ubuntu)
+            if: startsWith(matrix.config.os, 'ubuntu')
+            run: |
+              sudo apt-get update
+              sudo apt-get install -y libboost-all-dev
 
-    - name: Install dependencies (macOS)
-      if: startsWith(matrix.config.os, 'macos')
-      run: |
-        brew install boost
+          - name: Install dependencies (macOS)
+            if: startsWith(matrix.config.os, 'macos')
+            run: |
+              brew install boost
 
-    - name: Install dependencies (Windows)
-      if: startsWith(matrix.config.os, 'windows')
-      run: |
-        choco install boost-msvc-14.2
+          - name: Install dependencies (Windows)
+            if: startsWith(matrix.config.os, 'windows')
+            run: |
+              choco install boost-msvc-14.2
 
-    - name: Set up CMake (All platforms)
-      uses: lukka/get-cmake@latest
+          - name: Set up CMake (All platforms)
+            uses: lukka/get-cmake@latest
 
-    - name: Configure CMake
-      run: make build
-      env:
-        CMAKE_FLAGS: -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_ARCHITECTURE_ID=${{ matrix.config.arch }}
+          - name: Configure CMake
+            run: |
+              cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_ARCHITECTURE_ID=${{ matrix.config.arch }}
+              cmake --build build --config Release
 
-    - name: Archive Server Production Artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{ matrix.config.server-artifact }}
-        path: build/${{ matrix.config.server-artifact }}
+          - name: Archive Server Production Artifacts
+            uses: actions/upload-artifact@v3
+            with:
+              name: ${{ matrix.config.server-artifact }}
+              path: build/${{ matrix.config.server-artifact }}
 
-    - name: Archive Client Production Artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{ matrix.config.client-artifact }}
-        path: build/${{ matrix.config.client-artifact }}
+          - name: Archive Client Production Artifacts
+            uses: actions/upload-artifact@v3
+            with:
+              name: ${{ matrix.config.client-artifact }}
+              path: build/${{ matrix.config.client-artifact }}
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
+          - name: Create Release
+            id: create_release
+            uses: actions/create-release@v1
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            with:
+              tag_name: ${{ github.ref }}
+              release_name: Release ${{ github.ref }}
+              draft: false
+              prerelease: false
 
-    - name: Upload Server Release Asset
-      uses: actions/upload-release-asset@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/${{ matrix.config.server-artifact }}
-        asset_name: ${{ matrix.config.server-artifact }}
-        asset_content_type: application/octet-stream
+          - name: Upload Server Release Asset
+            uses: actions/upload-release-asset@v1
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            with:
+              upload_url: ${{ steps.create_release.outputs.upload_url }}
+              asset_path: ./build/${{ matrix.config.server-artifact }}
+              asset_name: ${{ matrix.config.server-artifact }}
+              asset_content_type: application/octet-stream
 
-    - name: Upload Client Release Asset
-      uses: actions/upload-release-asset@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/${{ matrix.config.client-artifact }}
-        asset_name: ${{ matrix.config.client-artifact }}
-        asset_content_type: application/octet-stream
+          - name: Upload Client Release Asset
+            uses: actions/upload-release-asset@v1
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            with:
+              upload_url: ${{ steps.create_release.outputs.upload_url }}
+              asset_path: ./build/${{ matrix.config.client-artifact }}
+              asset_name: ${{ matrix.config.client-artifact }}
+              asset_content_type: application/octet-stream
 
   container-image:
     runs-on: ubuntu-latest
