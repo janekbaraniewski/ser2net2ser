@@ -12,6 +12,9 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [server, client]
 
     steps:
     - name: Checkout code
@@ -27,11 +30,9 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build and tag the Docker image
-      run: make build-images
-
-    - name: tag images
-      run: make tag-images
-
-    - name: Push Docker images to GitHub Packages
-      run: make push-images
+    - name: Build container image
+      run: make build-${{ matrix.component }}-image
+    - name: Tag container image
+      run: make tag-${{ matrix.component }}-image
+    - name: Push container image
+      run: make push-${{ matrix.component }}-image
