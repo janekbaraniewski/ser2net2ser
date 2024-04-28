@@ -59,7 +59,6 @@ public:
         connect(socket_, endpoint_iterator);
         BOOST_LOG_TRIVIAL(info) << "Connected to server.";
         BOOST_LOG_TRIVIAL(info) << "Opening virtual serial port: " << vsp_name;
-        vsp_.open();
     }
 
     void run() {
