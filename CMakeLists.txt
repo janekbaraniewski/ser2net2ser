@@ -31,7 +31,7 @@ target_link_libraries(logging PUBLIC
   Boost::date_time
 )
 
-add_library(serial_server_lib src/logging.cpp src/server.cpp src/VirtualSerialPort.cpp) # Include VirtualSerialPort.cpp
+add_library(serial_server_lib src/logging.cpp src/server.cpp src/virtualserialport.cpp)
 target_include_directories(serial_server_lib PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(serial_server_lib PRIVATE
   Boost::system

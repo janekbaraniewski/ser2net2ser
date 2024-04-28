@@ -2,7 +2,7 @@
 #define CLIENT_H
 
 #include "common.hpp"
-#include "VirtualSerialPort.h"
+#include "virtualserialport.h"
 
 using namespace boost::asio;
 using ip::tcp;

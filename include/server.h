@@ -2,8 +2,8 @@
 #define SERVER_H
 
 #include "common.hpp"
-#include "ISerialPort.h"
-#include "RealSerialPort.h"
+#include "iserialport.h"
+#include "realserialport.h"
 
 using namespace boost::asio;
 using ip::tcp;
