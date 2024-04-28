@@ -1,10 +1,4 @@
 #include "VirtualSerialPort.h"
-#include <fcntl.h>
-#include <unistd.h>
-#include <termios.h>
-#include <stdexcept>
-#include <iostream>
-#include <sys/stat.h>
 
 VirtualSerialPort::VirtualSerialPort(const std::string& device) : device_name_("/dev/" + device) {
     master_fd_ = posix_openpt(O_RDWR | O_NOCTTY);

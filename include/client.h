@@ -1,18 +1,13 @@
-#ifndef SERVER_H
-#define SERVER_H
-
-#include <boost/asio.hpp>
-#include <string>
-#include "ISerialPort.h"
+#ifndef CLIENT_H
+#define CLIENT_H
 
 #include <iostream>
-#include <string>
+#include <array>
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
 
 #include <boost/asio.hpp>
-#include <boost/array.hpp>
 #include <boost/program_options.hpp>
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
@@ -25,26 +20,25 @@
 #include <boost/log/support/date_time.hpp>
 
 #include "logging.h"
-#include "ISerialPort.h"
-#include "RealSerialPort.h"
+#include "VirtualSerialPort.h"
 
 using namespace boost::asio;
 using ip::tcp;
 using std::string;
 
-class SerialServer {
+class SerialClient {
 public:
-    SerialServer(io_service& io, ISerialPort& serial, tcp::acceptor& acceptor);
+    SerialClient(const string& server_ip, unsigned short server_port, const string& vsp_name);
     void run();
 
 private:
-    io_service& io_service_;
-    ISerialPort& serial_;
-    tcp::acceptor& acceptor_;
+    io_service io_service_;
     tcp::socket socket_;
+    std::array<char, 256> buffer_;
+    VirtualSerialPort vsp_;
 
-    void start_accept();
     void do_read_write();
 };
 
-#endif // SERVER_H
+
+#endif // CLIENT_H
