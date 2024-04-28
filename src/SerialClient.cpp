@@ -1,4 +1,4 @@
-#include "client.h"
+#include "SerialClient.h"
 
 using namespace boost::asio;
 using namespace boost::program_options;

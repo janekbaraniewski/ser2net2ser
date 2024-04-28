@@ -1,4 +1,4 @@
-#include "server.h"
+#include "SerialServer.h"
 
 using namespace boost::asio;
 using namespace boost::program_options;
