@@ -81,12 +81,6 @@ private:
 int main(int argc, char* argv[]) {
     init_logging();
 
-    // Process command line arguments before accessing any files
-    if (argc > 1 && std::string(argv[1]) == "--help") {
-        std::cout << "Usage: ..." << std::endl;
-        return 0;
-    }
-
     try {
         options_description desc{"Options"};
         desc.add_options()
