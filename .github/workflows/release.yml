@@ -100,11 +100,9 @@ jobs:
           echo "Uploading $file"
           curl -X POST \
                 -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                -H "Content-Type: multipart/form-data" \
-                -F "file=@${file};type=$(file -b --mime-type $file)" \
-                -F "name=$(basename $file)" \
-                -F "label=$(basename $file)" \
-                "${{ steps.create_release.outputs.upload_url }}"
+                -H "Content-Type: application/octet-stream" \
+                -T "${file}" \
+                "${{ steps.create_release.outputs.upload_url }}?name=$(basename $file)&label=$(basename $file)"
         done
 
   container-image:
