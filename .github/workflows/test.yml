@@ -19,7 +19,7 @@ jobs:
     - name: Run tests
       run: make test
 
-  container image:
+  container-image:
     runs-on: ubuntu-latest
     strategy:
       matrix:
