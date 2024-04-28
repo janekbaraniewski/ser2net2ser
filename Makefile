@@ -35,10 +35,10 @@ tag-images: ## Tag container images
 tag-images: tag-server-image tag-client-image
 
 tag-server-image:
-	@docker tag $(REPO)/server:$(COMMIT_HASH) $(REPO)-server:$(VERSION)
+	@docker tag $(REPO)-server:$(COMMIT_HASH) $(REPO)-server:$(VERSION)
 
 tag-client-image:
-	@docker tag $(REPO)/client:$(COMMIT_HASH) $(REPO)-client:$(VERSION)
+	@docker tag $(REPO)-client:$(COMMIT_HASH) $(REPO)-client:$(VERSION)
 
 
 push-images: ## Push container images to registry
