@@ -81,7 +81,6 @@ jobs:
         path: artifacts
 
     - name: Create Release
-      id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -97,8 +96,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./artifacts
-        asset_name: artifacts
+        asset_path: ./artifacts/artifacts-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        asset_name: artifacts-${{ matrix.config.os }}-${{ matrix.config.arch }}
         asset_content_type: application/octet-stream
 
   container-image:
