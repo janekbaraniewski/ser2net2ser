@@ -80,6 +80,9 @@ jobs:
       with:
         path: artifacts
 
+    - name: List all files in artifacts directory
+      run: ls -R artifacts
+
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -92,14 +95,11 @@ jobs:
         prerelease: false
 
     - name: Upload Release Assets
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./artifacts/artifacts-${{ matrix.config.os }}-${{ matrix.config.arch }}
-        asset_name: artifacts-${{ matrix.config.os }}-${{ matrix.config.arch }}
-        asset_content_type: application/octet-stream
+      run: |
+        for file in artifacts/*; do
+          echo "Uploading $file"
+          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: $(file -b --mime-type $file)" --data-binary @"$file" "${{ steps.create_release.outputs.upload_url }}?name=$(basename $file)&label=$(basename $file)"
+        done
 
   container-image:
     runs-on: ubuntu-latest
