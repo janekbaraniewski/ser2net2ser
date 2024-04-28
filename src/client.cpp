@@ -3,52 +3,57 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
-
 #include <boost/asio.hpp>
 #include <boost/program_options.hpp>
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/utility/setup/console.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/sources/severity_logger.hpp>
+#include <boost/log/sources/record_ostream.hpp>
+#include <boost/log/support/date_time.hpp> // Ensure this is included for date-time support
+
 
 #include "logging.h"
+#include "VirtualSerialPort.h"
 
 using namespace boost::asio;
 using namespace boost::program_options;
 using ip::tcp;
+using std::string;
 using std::cout;
 using std::cerr;
 using std::endl;
+
+void init_logging() {
+    boost::log::register_simple_formatter_factory<boost::log::trivial::severity_level, char>("Severity");
+    boost::log::add_console_log(std::cout, boost::log::keywords::format = "[%TimeStamp%] [%ThreadID%] [%Severity%] %Message%");
+    boost::log::add_file_log(boost::log::keywords::file_name = "serial_client_%N.log",
+                             boost::log::keywords::rotation_size = 10 * 1024 * 1024,
+                             boost::log::keywords::time_based_rotation = boost::log::sinks::file::rotation_at_time_point(0, 0, 0),
+                             boost::log::keywords::format = "[%TimeStamp%] [%Severity%] %Message%");
+    boost::log::add_common_attributes();
+}
+
+
 
 class SerialClient {
 private:
     io_service io_service_;
     tcp::socket socket_;
-    int master_fd_, slave_fd_;
     std::array<char, 256> buffer_;
+    VirtualSerialPort vsp_;
 
 public:
-    SerialClient(const std::string& server_ip, unsigned short server_port)
-        : socket_(io_service_) {
-        // Connect to server
+    SerialClient(const std::string& server_ip, unsigned short server_port, const std::string& vsp_name)
+        : socket_(io_service_), vsp_(vsp_name) {
         tcp::resolver resolver(io_service_);
         auto endpoint_iterator = resolver.resolve({server_ip, std::to_string(server_port)});
         connect(socket_, endpoint_iterator);
 
-        // Setup PTY
-        master_fd_ = posix_openpt(O_RDWR | O_NOCTTY);
-        if (master_fd_ == -1 || grantpt(master_fd_) != 0 || unlockpt(master_fd_) != 0) {
-            BOOST_LOG_TRIVIAL(error) << "Failed to open or configure PTY master";
-            throw std::runtime_error("Failed to open or configure PTY master");
-        }
-
-        char* slave_name = ptsname(master_fd_);
-        if (!slave_name) {
-            BOOST_LOG_TRIVIAL(error) << "Failed to get PTY slave name";
-            throw std::runtime_error("Failed to get PTY slave name");
-        }
-        slave_fd_ = open(slave_name, O_RDWR);
-        if (slave_fd_ == -1) {
-            BOOST_LOG_TRIVIAL(error) << "Failed to open PTY slave";
-            throw std::runtime_error("Failed to open PTY slave");
-        }
-        BOOST_LOG_TRIVIAL(info) << "PTY setup completed. Slave device: " << slave_name;
+        // vsp_.open();  // Ensure the virtual port is ready for use
     }
 
     void run() {
@@ -60,34 +65,29 @@ private:
     void do_read_write() {
         socket_.async_read_some(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
             if (!ec) {
-                if (write(master_fd_, buffer_.data(), length) < 0) {
-                    BOOST_LOG_TRIVIAL(error) << "Write to PTY master failed";
+                std::string data(buffer_.begin(), buffer_.begin() + length);
+                if (!vsp_.write(data)) {
+                    cerr << "Write to virtual serial port failed" << endl;
                     return;
                 }
-                async_write(socket_, boost::asio::buffer(buffer_, length), [this](boost::system::error_code ec, std::size_t) {
-                    if (!ec) {
-                        do_read_write();
-                    } else {
-                        BOOST_LOG_TRIVIAL(error) << "Write back to TCP socket failed: " << ec.message();
-                    }
-                });
+                do_read_write();  // Continue reading
             } else {
-                BOOST_LOG_TRIVIAL(error) << "Read error: " << ec.message();
+                cerr << "Read error: " << ec.message() << endl;
             }
         });
     }
 };
 
-#ifndef UNIT_TEST
 int main(int argc, char* argv[]) {
-    init_logging();  // Initialize logging at the start of the main function
+    init_logging();
 
     try {
         options_description desc{"Options"};
         desc.add_options()
             ("help,h", "Help screen")
             ("server,s", value<std::string>()->default_value("127.0.0.1"), "Server IP address")
-            ("port,p", value<unsigned short>()->default_value(12345), "Server port");
+            ("port,p", value<unsigned short>()->default_value(12345), "Server port")
+            ("vsp,v", value<std::string>()->required(), "Virtual serial port name");
 
         variables_map vm;
         store(parse_command_line(argc, argv, desc), vm);
@@ -100,12 +100,13 @@ int main(int argc, char* argv[]) {
 
         std::string server_ip = vm["server"].as<std::string>();
         unsigned short server_port = vm["port"].as<unsigned short>();
+        std::string vsp_name = vm["vsp"].as<std::string>();
 
-        SerialClient client(server_ip, server_port);
+        SerialClient client(server_ip, server_port, vsp_name);
         client.run();
     } catch (const std::exception& e) {
         BOOST_LOG_TRIVIAL(error) << "Exception: " << e.what();
+        cerr << "Exception: " << e.what() << endl;
     }
     return 0;
 }
-#endif
