@@ -55,11 +55,18 @@ jobs:
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_ARCHITECTURE_ID=${{ matrix.config.arch }}
         cmake --build build --config Release
 
+    - name: Rename binaries
+      run: |
+        mv build/serial_client build/serial-client-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        mv build/serial_server build/serial-server-${{ matrix.config.os }}-${{ matrix.config.arch }}
+
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
         name: artifacts-${{ matrix.config.os }}-${{ matrix.config.arch }}
-        path: build/
+        path: |
+          build/serial-client-${{ matrix.config.os }}-${{ matrix.config.arch }}
+          build/serial-server-${{ matrix.config.os }}-${{ matrix.config.arch }}
 
   create-and-upload-release:
     needs: build-and-release
@@ -74,6 +81,7 @@ jobs:
         path: artifacts
 
     - name: Create Release
+      id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -89,8 +97,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./artifacts/artifacts-${{ matrix.config.os }}-${{ matrix.config.arch }}
-        asset_name: artifacts-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        asset_path: ./artifacts
+        asset_name: artifacts
         asset_content_type: application/octet-stream
 
   container-image:
