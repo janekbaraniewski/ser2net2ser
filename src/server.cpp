@@ -9,103 +9,62 @@
 #include <boost/program_options.hpp>
 
 #include "logging.h"
+#include "ISerialPort.h"
+#include "RealSerialPort.h"
+#include "server.h"
 
 using namespace boost::asio;
 using namespace boost::program_options;
 using ip::tcp;
 using std::string;
-using std::cout;
-using std::cerr;
 using std::endl;
 
+SerialServer::SerialServer(io_service& io, ISerialPort& serial, tcp::acceptor& acceptor)
+    : io_service_(io), serial_(serial), acceptor_(acceptor), socket_(io) {
+    start_accept();
+}
 
-class SerialServer {
-private:
-    io_service io_service_;
-    serial_port serial_;
-    tcp::acceptor acceptor_;
-    tcp::socket socket_;
+void SerialServer::run() {
+    BOOST_LOG_TRIVIAL(info) << "Server is running.";
+    io_service_.run();
+    BOOST_LOG_TRIVIAL(info) << "Server stopped.";
+}
 
-public:
-    SerialServer(const string& dev_name, unsigned int baud_rate, unsigned short port)
-        : serial_(io_service_), socket_(io_service_), acceptor_(io_service_, tcp::endpoint(tcp::v4(), port)) {
-        BOOST_LOG_SEV(lg, logging::trivial::info) << "Initializing server with device: " << dev_name << ", baud rate: " << baud_rate << ", port: " << port;
-
-        // Open the serial port
-        try {
-            serial_.open(dev_name);
-            serial_.set_option(serial_port_base::baud_rate(baud_rate));
-            BOOST_LOG_SEV(lg, logging::trivial::info) << "Serial port opened and configured.";
-        } catch (boost::system::system_error& e) {
-            BOOST_LOG_SEV(lg, logging::trivial::error) << "Failed to open serial port: " << e.what();
-            throw;
+void SerialServer::start_accept() {
+    acceptor_.async_accept(socket_, [this](boost::system::error_code ec) {
+        if (!ec) {
+            BOOST_LOG_TRIVIAL(info) << "Client connected.";
+            do_read_write();
+        } else {
+            BOOST_LOG_TRIVIAL(error) << "Error accepting connection: " << ec.message();
         }
+    });
+}
 
-        // Start accepting connections
-        start_accept();
-    }
+void SerialServer::do_read_write() {
+    static boost::array<char, 128> buf;
+    serial_.async_read_some(boost::asio::buffer(buf), [this](boost::system::error_code ec, std::size_t length) {
+        if (!ec) {
+            async_write(socket_, boost::asio::buffer(buf, length), [this](boost::system::error_code ec, std::size_t) {
+                if (!ec) {
+                    do_read_write();  // Loop back to continue reading/writing
+                } else {
+                    BOOST_LOG_TRIVIAL(error) << "Error writing to client: " << ec.message();
+                }
+            });
+        } else {
+            BOOST_LOG_TRIVIAL(error) << "Error reading from serial port: " << ec.message();
+        }
+    });
+}
 
-    void run() {
-        BOOST_LOG_SEV(lg, logging::trivial::info) << "Server is running.";
-        io_service_.run();
-        BOOST_LOG_SEV(lg, logging::trivial::info) << "Server stopped.";
-    }
-
-private:
-    void start_accept() {
-        acceptor_.async_accept(socket_, [this](boost::system::error_code ec) {
-            if (!ec) {
-                BOOST_LOG_SEV(lg, logging::trivial::info) << "Client connected.";
-                do_read_write();
-            } else {
-                BOOST_LOG_SEV(lg, logging::trivial::error) << "Error accepting connection: " << ec.message();
-            }
-        });
-    }
-
-    void do_read_write() {
-        static boost::array<char, 128> buf;
-
-        // Asynchronous read from serial port
-        serial_.async_read_some(boost::asio::buffer(buf), [this](boost::system::error_code ec, std::size_t length) {
-            if (!ec) {
-                BOOST_LOG_SEV(lg, logging::trivial::info) << "Read " << length << " bytes from the serial port.";
-                // Write to TCP socket
-                async_write(socket_, boost::asio::buffer(buf, length), [this](boost::system::error_code ec, std::size_t) {
-                    if (!ec) {
-                        BOOST_LOG_SEV(lg, logging::trivial::info) << "Data written to client.";
-                        do_read_write();  // Loop back to continue reading/writing
-                    } else {
-                        BOOST_LOG_SEV(lg, logging::trivial::error) << "Error writing to client: " << ec.message();
-                    }
-                });
-            } else {
-                BOOST_LOG_SEV(lg, logging::trivial::error) << "Error reading from serial port: " << ec.message();
-            }
-        });
-
-        // Asynchronous read from TCP socket
-        socket_.async_read_some(boost::asio::buffer(buf), [this](boost::system::error_code ec, std::size_t length) {
-            if (!ec) {
-                BOOST_LOG_SEV(lg, logging::trivial::info) << "Received " << length << " bytes from client.";
-                // Write to serial port
-                async_write(serial_, boost::asio::buffer(buf, length), [this](boost::system::error_code ec, std::size_t) {
-                    if (!ec) {
-                        BOOST_LOG_SEV(lg, logging::trivial::info) << "Data written to serial port.";
-                        do_read_write();  // Loop back to continue reading/writing
-                    } else {
-                        BOOST_LOG_SEV(lg, logging::trivial::error) << "Error writing to serial port: " << ec.message();
-                    }
-                });
-            } else {
-                BOOST_LOG_SEV(lg, logging::trivial::error) << "Error reading from client: " << ec.message();
-            }
-        });
-    }
-};
-
+#ifndef UNIT_TEST
 int main(int argc, char* argv[]) {
     init_logging();
+    io_service io;
+    tcp::acceptor acceptor(io, tcp::endpoint(tcp::v4(), 12345));
+    RealSerialPort realSerial(io);
+
     try {
         options_description desc{"Options"};
         desc.add_options()
@@ -119,7 +78,7 @@ int main(int argc, char* argv[]) {
         notify(vm);
 
         if (vm.count("help")) {
-            cout << desc << endl;
+            std::cout << desc << std::endl;
             return 0;
         }
 
@@ -127,10 +86,17 @@ int main(int argc, char* argv[]) {
         unsigned int baud_rate = vm["baud"].as<unsigned int>();
         unsigned short port = vm["port"].as<unsigned short>();
 
-        SerialServer server(dev_name, baud_rate, port);
+        realSerial.open(dev_name);
+        realSerial.set_option(serial_port_base::baud_rate(baud_rate));
+
+        SerialServer server(io, realSerial, acceptor);
         server.run();
     } catch (const std::exception& e) {
         BOOST_LOG_TRIVIAL(error) << "Exception: " << e.what();
+        return 1;
     }
     return 0;
 }
+#else
+#error "UNIT_TEST is defined!"
+#endif

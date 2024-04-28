@@ -78,6 +78,7 @@ private:
     }
 };
 
+#ifndef UNIT_TEST
 int main(int argc, char* argv[]) {
     init_logging();  // Initialize logging at the start of the main function
 
@@ -107,3 +108,4 @@ int main(int argc, char* argv[]) {
     }
     return 0;
 }
+#endif
