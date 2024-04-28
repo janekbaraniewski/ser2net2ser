@@ -19,3 +19,15 @@ jobs:
     - name: Run tests
       run: make test
 
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Build and tag the Docker image
+      run: make build-images

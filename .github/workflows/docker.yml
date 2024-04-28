@@ -12,9 +12,6 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        component: [server, client]
 
     steps:
     - name: Checkout code
@@ -31,12 +28,10 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build and tag the Docker image
-      run: |
-        docker build . -f Dockerfile.${{ matrix.component }} \
-          -t ghcr.io/${{ github.repository }}/${{ matrix.component }}:${{ github.sha }} \
-          -t ghcr.io/${{ github.repository }}/${{ matrix.component }}:latest
+      run: make build-images
+
+    - name: tag images
+      run: make tag-images
 
     - name: Push Docker images to GitHub Packages
-      run: |
-        docker push ghcr.io/${{ github.repository }}/${{ matrix.component }}:${{ github.sha }}
-        docker push ghcr.io/${{ github.repository }}/${{ matrix.component }}:latest
+      run: make push-images
