@@ -48,12 +48,9 @@ jobs:
       uses: lukka/get-cmake@latest
 
     - name: Configure CMake
-      run: |
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_ARCHITECTURE_ID=${{ matrix.config.arch }}
-
-    - name: Build
-      run: |
-        cmake --build build --config Release
+      run: make build
+      env:
+        CMAKE_FLAGS: -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_ARCHITECTURE_ID=${{ matrix.config.arch }}
 
     - name: Archive Server Production Artifacts
       uses: actions/upload-artifact@v3

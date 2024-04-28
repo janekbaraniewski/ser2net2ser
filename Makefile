@@ -2,6 +2,7 @@ BUILD_DIR = build
 REPO = ghcr.io/janekbaraniewski/ser2net2ser
 VERSION ?= latest
 COMMIT_HASH ?= $(shell git rev-parse --short HEAD)
+CMAKE_FLAGS ?= -DCMAKE_BUILD_TYPE=Release
 
 help:  ## Show this help message
 	@echo "Usage: make [target]"
@@ -14,7 +15,7 @@ clean: ## Clean build directory
 
 build: ## Build with cmake
 build: clean
-	@cmake -S . -B build
+	@cmake -S . -B build $(CMAKE_FLAGS)
 	@cmake --build build
 
 test: ## Build and test
