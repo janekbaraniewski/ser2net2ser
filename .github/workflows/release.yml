@@ -6,6 +6,9 @@ on:
       - 'v*'
 
 jobs:
+  permissions:
+    contents: read
+    packages: write
   build-and-release:
     runs-on: ${{ matrix.config.os }}
     strategy:
