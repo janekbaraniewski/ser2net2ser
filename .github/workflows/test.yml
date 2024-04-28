@@ -16,8 +16,8 @@ jobs:
           # Define combinations of operating systems and architectures
           - {os: ubuntu-latest, arch: x64, server-artifact: serial_server_linux_x64, client-artifact: serial_client_linux_x64}
           - {os: ubuntu-latest, arch: arm64, server-artifact: serial_server_linux_arm64, client-artifact: serial_client_linux_arm64}
-          - {os: windows-latest, arch: x64, server-artifact: serial_server_windows_x64.exe, client-artifact: serial_client_windows_x64.exe}
-          - {os: windows-latest, arch: arm64, server-artifact: serial_server_windows_arm64.exe, client-artifact: serial_client_windows_arm64.exe}
+          # - {os: windows-latest, arch: x64, server-artifact: serial_server_windows_x64.exe, client-artifact: serial_client_windows_x64.exe}
+          # - {os: windows-latest, arch: arm64, server-artifact: serial_server_windows_arm64.exe, client-artifact: serial_client_windows_arm64.exe}
           - {os: macos-latest, arch: x64, server-artifact: serial_server_mac_x64, client-artifact: serial_client_mac_x64}
           - {os: macos-latest, arch: arm64, server-artifact: serial_server_mac_arm64, client-artifact: serial_client_mac_arm64}
 
