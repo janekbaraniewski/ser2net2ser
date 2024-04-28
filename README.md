@@ -1,5 +1,7 @@
 # ser2net2ser
 
+> This still needs testing
+
 ## Requirements
 
 - Linux or macOS operating system
