@@ -13,6 +13,4 @@
 
 #include "logging.h"
 
-// Common utilities, logging, and error handling functions could be defined here
-
 #endif // COMMON_HPP
