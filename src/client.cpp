@@ -1,23 +1,4 @@
-#include <iostream>
-#include <array>
-#include <fcntl.h>
-#include <unistd.h>
-#include <termios.h>
-
-#include <boost/asio.hpp>
-#include <boost/program_options.hpp>
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/utility/setup/console.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/sources/record_ostream.hpp>
-#include <boost/log/support/date_time.hpp>
-
-#include "logging.h"
-#include "VirtualSerialPort.h"
+#include "client.h"
 
 using namespace boost::asio;
 using namespace boost::program_options;
@@ -43,49 +24,39 @@ void init_logging() {
     boost::log::register_simple_formatter_factory<boost::log::trivial::severity_level, char>("Severity");
 }
 
-class SerialClient {
-private:
-    io_service io_service_;
-    tcp::socket socket_;
-    std::array<char, 256> buffer_;
-    VirtualSerialPort vsp_;
+SerialClient::SerialClient(const string& server_ip, unsigned short server_port, const string& vsp_name)
+    : socket_(io_service_), vsp_(vsp_name) {
+    BOOST_LOG_TRIVIAL(info) << "Initializing client...";
+    tcp::resolver resolver(io_service_);
+    auto endpoint_iterator = resolver.resolve({server_ip, std::to_string(server_port)});
+    BOOST_LOG_TRIVIAL(info) << "Connecting to server at " << server_ip << ":" << server_port;
+    connect(socket_, endpoint_iterator);
+    BOOST_LOG_TRIVIAL(info) << "Connected to server.";
+    BOOST_LOG_TRIVIAL(info) << "Opening virtual serial port: " << vsp_name;
+}
 
-public:
-    SerialClient(const string& server_ip, unsigned short server_port, const string& vsp_name)
-        : socket_(io_service_), vsp_(vsp_name) {
-        BOOST_LOG_TRIVIAL(info) << "Initializing client...";
-        tcp::resolver resolver(io_service_);
-        auto endpoint_iterator = resolver.resolve({server_ip, std::to_string(server_port)});
-        BOOST_LOG_TRIVIAL(info) << "Connecting to server at " << server_ip << ":" << server_port;
-        connect(socket_, endpoint_iterator);
-        BOOST_LOG_TRIVIAL(info) << "Connected to server.";
-        BOOST_LOG_TRIVIAL(info) << "Opening virtual serial port: " << vsp_name;
-    }
+void SerialClient::run() {
+    BOOST_LOG_TRIVIAL(info) << "Starting client I/O operations.";
+    do_read_write();
+    io_service_.run();
+}
 
-    void run() {
-        BOOST_LOG_TRIVIAL(info) << "Starting client I/O operations.";
-        do_read_write();
-        io_service_.run();
-    }
-
-private:
-    void do_read_write() {
-        socket_.async_read_some(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
-            if (!ec) {
-                string data(buffer_.data(), length);
-                BOOST_LOG_TRIVIAL(info) << "Received data: " << data;
-                if (vsp_.write(data)) {
-                    BOOST_LOG_TRIVIAL(info) << "Data written to virtual serial port.";
-                } else {
-                    BOOST_LOG_TRIVIAL(error) << "Failed to write to virtual serial port.";
-                }
-                do_read_write();
+void SerialClient::do_read_write() {
+    socket_.async_read_some(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
+        if (!ec) {
+            string data(buffer_.data(), length);
+            BOOST_LOG_TRIVIAL(info) << "Received data: " << data;
+            if (vsp_.write(data)) {
+                BOOST_LOG_TRIVIAL(info) << "Data written to virtual serial port.";
             } else {
-                BOOST_LOG_TRIVIAL(error) << "Read error: " << ec.message();
+                BOOST_LOG_TRIVIAL(error) << "Failed to write to virtual serial port.";
             }
-        });
-    }
-};
+            do_read_write();
+        } else {
+            BOOST_LOG_TRIVIAL(error) << "Read error: " << ec.message();
+        }
+    });
+}
 
 int main(int argc, char* argv[]) {
     init_logging();
