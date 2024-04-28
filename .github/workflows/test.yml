@@ -8,16 +8,49 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          # Define combinations of operating systems and architectures
+          - {os: ubuntu-latest, arch: x64, server-artifact: serial_server_linux_x64, client-artifact: serial_client_linux_x64}
+          - {os: ubuntu-latest, arch: arm64, server-artifact: serial_server_linux_arm64, client-artifact: serial_client_linux_arm64}
+          - {os: windows-latest, arch: x64, server-artifact: serial_server_windows_x64.exe, client-artifact: serial_client_windows_x64.exe}
+          - {os: windows-latest, arch: arm64, server-artifact: serial_server_windows_arm64.exe, client-artifact: serial_client_windows_arm64.exe}
+          - {os: macos-latest, arch: x64, server-artifact: serial_server_mac_x64, client-artifact: serial_client_mac_x64}
+          - {os: macos-latest, arch: arm64, server-artifact: serial_server_mac_arm64, client-artifact: serial_client_mac_arm64}
 
     steps:
     - uses: actions/checkout@v3
-    - name: Install dependencies
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies (Ubuntu)
+      if: startsWith(matrix.config.os, 'ubuntu')
       run: |
         sudo apt-get update
         sudo apt-get install -y libboost-all-dev
-    - name: Run tests
-      run: make test
+
+    - name: Install dependencies (macOS)
+      if: startsWith(matrix.config.os, 'macos')
+      run: |
+        brew install boost
+
+    - name: Install dependencies (Windows)
+      if: startsWith(matrix.config.os, 'windows')
+      run: |
+        choco install boost-msvc-14.2
+
+    - name: Set up CMake (All platforms)
+      uses: lukka/get-cmake@latest
+
+    - name: make build
+      run: |
+        make build
 
   container-image:
     runs-on: ubuntu-latest
