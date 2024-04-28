@@ -1,0 +1,42 @@
+name: Build and Push Docker images
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'src/**'
+      - 'Dockerfile.server'
+      - 'Dockerfile.client'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [server, client]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and tag the Docker image
+      run: |
+        docker build . -f Dockerfile.${{ matrix.component }} \
+          -t ghcr.io/${{ github.repository }}/${{ matrix.component }}:${{ github.sha }} \
+          -t ghcr.io/${{ github.repository }}/${{ matrix.component }}:latest
+
+    - name: Push Docker images to GitHub Packages
+      run: |
+        docker push ghcr.io/${{ github.repository }}/${{ matrix.component }}:${{ github.sha }}
+        docker push ghcr.io/${{ github.repository }}/${{ matrix.component }}:latest
