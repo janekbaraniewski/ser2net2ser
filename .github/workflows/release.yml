@@ -70,61 +70,53 @@ jobs:
         name: ser2net2ser-${{ env.VERSION }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
         path: build/ser2net2ser-${{ env.VERSION }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
 
-  create-release:
-    needs: build-and-release
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Download all artifacts
-      uses: actions/download-artifact@v3
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v2
       with:
-        path: artifacts
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: build/ser2net2ser-${{ env.VERSION }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        asset_name: ser2net2ser-${{ env.VERSION }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        tag: ${{ github.ref }}
 
-    - name: List all files in artifacts directory
-      run: ls -R artifacts
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref_name }}
-        draft: false
-        prerelease: false
+  # create-release:
+  #   needs: build-and-release
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+  #   steps:
+  #   - uses: actions/checkout@v3
 
-    - name: debug
-      run: ls -la artifacts/
+  #   - name: Download all artifacts
+  #     uses: actions/download-artifact@v3
+  #     with:
+  #       path: artifacts
 
-    - name: Upload Release Assets
-      run: |
-        UPLOAD_URL="${{ steps.create_release.outputs.upload_url }}"
-        UPLOAD_URL="${UPLOAD_URL%\{*}" # Remove {?name,label} from URL
-        for file in /home/runner/work/ser2net2ser/ser2net2ser/artifacts/*; do
-          if [ -s "$file" ]; then # Check if file is not empty
-            FILE_NAME=$(basename "$file")
-            echo "Uploading $FILE_NAME"
-            echo 'curl -v -X POST \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Content-Type: multipart/form-data" \
-              -F "file=@$file;type=$(file -b --mime-type $file)" \
-              -F "name=$FILE_NAME" \
-              "${UPLOAD_URL}?name=$FILE_NAME"'
-            curl -v -X POST \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Content-Type: multipart/form-data" \
-              -F "file=@$file;type=$(file -b --mime-type $file)" \
-              -F "name=$FILE_NAME" \
-              "${UPLOAD_URL}?name=$FILE_NAME"
-          else
-            echo "Skipping upload for empty file $file"
-          fi
-        done
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #   - name: List all files in artifacts directory
+  #     run: ls -R artifacts
+
+  #   - name: Create Release
+  #     id: create_release
+  #     uses: actions/create-release@v1
+  #     env:
+  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     with:
+  #       tag_name: ${{ github.ref }}
+  #       release_name: Release ${{ github.ref_name }}
+  #       draft: false
+  #       prerelease: false
+
+  #   - name: debug
+  #     run: ls -la artifacts/
+
+  #   - name: Upload binaries to release
+  #     uses: svenstaro/upload-release-action@v2
+  #     with:
+  #       repo_token: ${{ secrets.GITHUB_TOKEN }}
+  #       file:
+  #       asset_name: mything
+  #       tag: ${{ github.ref }}
+  #       overwrite: true
+  #       body: "This is my release text"
 
 
   container-image:
