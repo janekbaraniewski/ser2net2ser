@@ -11,17 +11,20 @@ VirtualSerialPort::VirtualSerialPort(const std::string& device) : device_name_("
         throw std::runtime_error("Failed to get PTY slave name");
     }
 
-    unlink(device_name_.c_str());
+    if (unlink(device_name_.c_str()) == -1 && errno != ENOENT) {
+        throw std::runtime_error("Failed to remove existing symlink");
+    }
+
     if (symlink(slave_name, device_name_.c_str()) != 0) {
         throw std::runtime_error("Failed to create symlink for PTY slave");
     }
+
+    chmod(device_name_.c_str(), 0666);
 
     slave_fd_ = ::open(slave_name, O_RDWR);
     if (slave_fd_ == -1) {
         throw std::runtime_error("Failed to open PTY slave");
     }
-
-    chmod(device_name_.c_str(), 0666);
 }
 
 VirtualSerialPort::~VirtualSerialPort() {
