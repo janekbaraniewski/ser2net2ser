@@ -1,3 +1,4 @@
+#include "logging.h"
 #include "VirtualSerialPort.h"
 
 VirtualSerialPort::VirtualSerialPort(const std::string& device) : device_name_("/dev/" + device) {
@@ -38,6 +39,7 @@ void VirtualSerialPort::close() {
 }
 
 bool VirtualSerialPort::write(const std::string& data) {
+    BOOST_LOG_TRIVIAL(info) << "VSP::write " << data;
     ssize_t size = ::write(master_fd_, data.c_str(), data.size());
     return size >= 0;
 }
@@ -47,6 +49,7 @@ std::string VirtualSerialPort::read() {
     ssize_t len = ::read(master_fd_, buffer, sizeof(buffer) - 1);
     if (len > 0) {
         buffer[len] = '\0';
+        BOOST_LOG_TRIVIAL(info) << "VSP::read " << buffer;
         return std::string(buffer);
     }
     return "";
