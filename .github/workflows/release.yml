@@ -107,6 +107,12 @@ jobs:
           if [ -s "$file" ]; then # Check if file is not empty
             FILE_NAME=$(basename "$file")
             echo "Uploading $FILE_NAME"
+            echo 'curl -v -X POST \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: multipart/form-data" \
+              -F "file=@$file;type=$(file -b --mime-type $file)" \
+              -F "name=$FILE_NAME" \
+              "${UPLOAD_URL}?name=$FILE_NAME"'
             curl -v -X POST \
               -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
               -H "Content-Type: multipart/form-data" \
