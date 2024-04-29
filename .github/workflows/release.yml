@@ -99,18 +99,18 @@ jobs:
     - name: debug upload url
       run:
         echo "${{ steps.create_release.outputs.upload_url }}"
+        ls -la artifacts
 
     - name: Upload Release Assets
       run: |
         for file in artifacts/*; do
           if [ -s "$file" ]; then
             echo "Uploading $file"
-            # Extract the correct URL by removing the unnecessary template part
             UPLOAD_URL="${{ steps.create_release.outputs.upload_url }}"
             UPLOAD_URL="${UPLOAD_URL%\{*}" # Removes {?name,label}
             FILE_NAME=$(basename "$file")
 
-            curl -X POST \
+            curl -X POST -vvv \
               -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
               -H "Content-Type: multipart/form-data" \
               -F "file=@$file;type=$(file -b --mime-type $file)" \
@@ -120,7 +120,6 @@ jobs:
             echo "Skipping upload for empty file $file"
           fi
         done
-
 
   container-image:
     runs-on: ubuntu-latest
