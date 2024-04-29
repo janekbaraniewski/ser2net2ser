@@ -31,9 +31,9 @@ target_link_libraries(logging PUBLIC
   Boost::date_time
 )
 
-add_library(serial_server_lib src/logging.cpp src/SerialServer.cpp src/VirtualSerialPort.cpp)
-target_include_directories(serial_server_lib PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(serial_server_lib PRIVATE
+add_library(core_lib src/logging.cpp src/SerialServer.cpp src/SerialClient.cpp src/VirtualSerialPort.cpp)
+target_include_directories(core_lib PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(core_lib PRIVATE
   Boost::system
   Boost::program_options
   Boost::log
@@ -43,20 +43,9 @@ target_link_libraries(serial_server_lib PRIVATE
   pthread
 )
 
-add_executable(serial_server src/SerialServer.cpp)
-target_link_libraries(serial_server PRIVATE
-  serial_server_lib
-  logging
-  Boost::system
-  Boost::program_options
-  Boost::log
-  Boost::log_setup
-  Boost::date_time
-)
-
-add_executable(serial_client src/SerialClient.cpp)
-target_link_libraries(serial_client PRIVATE
-  serial_server_lib
+add_executable(ser2net2ser src/main.cpp)
+target_link_libraries(ser2net2ser PRIVATE
+  core_lib
   logging
   Boost::system
   Boost::program_options

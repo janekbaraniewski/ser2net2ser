@@ -55,18 +55,15 @@ jobs:
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_ARCHITECTURE_ID=${{ matrix.config.arch }}
         cmake --build build --config Release
 
-    - name: Rename binaries
+    - name: Rename binary
       run: |
-        mv build/serial_client build/serial-client-${{ matrix.config.os }}-${{ matrix.config.arch }}
-        mv build/serial_server build/serial-server-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        mv build/ser2net2ser build/ser2net2ser-${{ github.ref }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: artifacts-${{ matrix.config.os }}-${{ matrix.config.arch }}
-        path: |
-          build/serial-client-${{ matrix.config.os }}-${{ matrix.config.arch }}
-          build/serial-server-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        name: ser2net2ser-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        path: build/ser2net2ser-${{ github.ref }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
 
   create-and-upload-release:
     needs: build-and-release
@@ -110,9 +107,6 @@ jobs:
 
   container-image:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        component: [server, client]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -133,16 +127,16 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build container image
-        run: make build-${{ matrix.component }}-image
+        run: make build-images
         env:
           COMMIT_HASH: ${{ env.COMMIT_HASH }}
 
       - name: Tag container image
-        run: make tag-${{ matrix.component }}-image
+        run: make tag-images
         env:
           COMMIT_HASH: ${{ env.COMMIT_HASH }}
 
       - name: Push container images
-        run: make push-${{ matrix.component }}-images
+        run: make push-images
         env:
           COMMIT_HASH: ${{ env.COMMIT_HASH }}

@@ -26,7 +26,7 @@ This will compile both the server and client applications.
 The server needs to be connected to a serial device. It can be started with the following command:
 
 ```bash
-./build/serial_server \
+ser2net2ser serve \
   --device /dev/ttyUSB0 \
   --baud 9600 \
   --port 12345
@@ -38,14 +38,14 @@ The server needs to be connected to a serial device. It can be started with the 
 --port: TCP port on which the server will listen for incoming connections.
 ```
 
-![server](docs/server.png)
+![serve](docs/serve.png)
 
 ## Running the Client
 
 The client should be run on the machine where you want the virtual serial port to be created:
 
 ```bash
-sudo ./build/serial_client \
+ser2net2ser connect \
   --server 192.168.1.100 \
   --port 12345 \
   --vsp "tty.usbserial-666"
@@ -57,7 +57,7 @@ sudo ./build/serial_client \
 --vsp: Name of the virtual serial port to be created.
 ```
 
-![client](docs/client.png)
+![connect](docs/connect.png)
 
 ## Docker Containers
 
