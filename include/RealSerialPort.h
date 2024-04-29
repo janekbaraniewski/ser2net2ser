@@ -4,16 +4,19 @@
 #include "ISerialPort.h"
 #include <boost/asio.hpp>
 
+using boost::asio::serial_port_base;
+
 class RealSerialPort : public ISerialPort {
 public:
-    explicit RealSerialPort(io_service& io) : port(io) {}
+    explicit RealSerialPort(boost::asio::io_service& io) : port(io) {}
 
-    void open(const string& device) override {
+    void open(const std::string& device, serial_port_base::baud_rate baudRate) override {
         port.open(device);
-    }
-
-    void set_option(const serial_port_base::baud_rate& option) override {
-        port.set_option(option);
+        port.set_option(baudRate);
+        port.set_option(serial_port_base::character_size(8));
+        port.set_option(serial_port_base::parity(serial_port_base::parity::none));
+        port.set_option(serial_port_base::stop_bits(serial_port_base::stop_bits::one));
+        port.set_option(serial_port_base::flow_control(serial_port_base::flow_control::none));
     }
 
     void async_read_some(const boost::asio::mutable_buffer& buffer, std::function<void(const boost::system::error_code&, std::size_t)> handler) override {

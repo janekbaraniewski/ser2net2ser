@@ -25,6 +25,7 @@ void SerialServer::start_accept() {
             do_read_write();
         } else {
             BOOST_LOG_TRIVIAL(error) << "Error accepting connection: " << ec.message();
+            start_accept();
         }
     });
 }
@@ -39,10 +40,12 @@ void SerialServer::do_read_write() {
                     do_read_write();
                 } else {
                     BOOST_LOG_TRIVIAL(error) << "Error writing to client: " << ec.message();
+                    socket_.close();
                 }
             });
         } else {
             BOOST_LOG_TRIVIAL(error) << "Error reading from serial port: " << ec.message();
+            socket_.close();
         }
     });
 }
