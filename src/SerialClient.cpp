@@ -31,9 +31,9 @@ void SerialClient::do_read_write() {
             std::string data(buffer_.begin(), buffer_.begin() + length);
             BOOST_LOG_TRIVIAL(info) << "Received data: " << data;
             if (vsp_.write(data)) {
-                BOOST_LOG_TRIVIAL(info) << "Data written to virtual serial port.";
+                BOOST_LOG_TRIVIAL(info) << "Data written to virtual serial port." << data;
             } else {
-                BOOST_LOG_TRIVIAL(error) << "Failed to write to virtual serial port.";
+                BOOST_LOG_TRIVIAL(error) << "Failed to write to virtual serial port." << data;
             }
             do_read_write();
         } else {
