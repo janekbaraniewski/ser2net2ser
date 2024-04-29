@@ -10,18 +10,18 @@ using ip::tcp;
 using std::string;
 
 class SerialServer {
-public:
-    SerialServer(io_service& io, ISerialPort& serial, tcp::acceptor& acceptor);
-    void run();
-
 private:
-    io_service& io_service_;
+    boost::asio::io_service& io_service_;
     ISerialPort& serial_;
-    tcp::acceptor& acceptor_;
-    tcp::socket socket_;
+    boost::asio::ip::tcp::acceptor& acceptor_;
+    boost::asio::ip::tcp::socket socket_;
+    std::array<char, 1024> buf;  // Buffer for data
 
     void start_accept();
     void do_read_write();
+public:
+    SerialServer(boost::asio::io_service& io, ISerialPort& serial, boost::asio::ip::tcp::acceptor& acceptor);
+    void run();
 };
 
 #endif // SERVER_H
