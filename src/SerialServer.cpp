@@ -12,6 +12,7 @@ SerialServer::SerialServer(boost::asio::io_service& io_service, const std::strin
 void SerialServer::run() {
     BOOST_LOG_TRIVIAL(info) << "SerialServer::run";
     start_accept();
+    BOOST_LOG_TRIVIAL(info) << "ioservice::run";
     io_service_.run();
 }
 
@@ -19,6 +20,7 @@ void SerialServer::start_accept() {
     BOOST_LOG_TRIVIAL(info) << "SerialServer::start_accept";
 
     acceptor_.async_accept(socket_, [this](boost::system::error_code ec) {
+        BOOST_LOG_TRIVIAL(info) << "SerialServer::acceptor::async_accept";
         if (!ec) {
             handle_session();
         }
