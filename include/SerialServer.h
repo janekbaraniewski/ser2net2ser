@@ -1,27 +1,27 @@
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef SERIALSERVER_H
+#define SERIALSERVER_H
 
-#include "common.hpp"
-#include "ISerialPort.h"
 #include "RealSerialPort.h"
-
-using namespace boost::asio;
-using ip::tcp;
-using std::string;
+#include <boost/asio.hpp>
+#include <array>
 
 class SerialServer {
-private:
-    boost::asio::io_service& io_service_;
-    ISerialPort& serial_;
-    boost::asio::ip::tcp::acceptor& acceptor_;
-    boost::asio::ip::tcp::socket socket_;
-    std::array<char, 1024> buf;  // Buffer for data
-
-    void start_accept();
-    void do_read_write();
 public:
-    SerialServer(boost::asio::io_service& io, ISerialPort& serial, boost::asio::ip::tcp::acceptor& acceptor);
+    SerialServer(boost::asio::io_service& io_service, const std::string& device, unsigned int baud_rate);
+
     void run();
+
+private:
+    void start_accept();
+    void handle_session();
+    void async_read_socket();
+    void async_read_serial();
+
+    boost::asio::io_service& io_service_;
+    boost::asio::ip::tcp::acceptor acceptor_;
+    boost::asio::ip::tcp::socket socket_;
+    RealSerialPort serial_port_;
+    std::array<char, 1024> buffer_;
 };
 
-#endif // SERVER_H
+#endif // SERIALSERVER_H

@@ -14,11 +14,8 @@ using std::cerr;
 using std::endl;
 
 void setup_and_run_server(io_service& io, const variables_map& vm) {
-    tcp::acceptor acceptor(io, tcp::endpoint(tcp::v4(), vm["port"].as<unsigned short>()));
-    RealSerialPort realSerial(io);
-    realSerial.open(vm["device"].as<string>(), boost::asio::serial_port_base::baud_rate(vm["baud"].as<unsigned int>()));
-
-    SerialServer server(io, realSerial, acceptor);
+    unsigned int baud_rate = vm["baud"].as<unsigned int>();  // Get baud rate as unsigned int
+    SerialServer server(io, vm["device"].as<string>(), baud_rate);
     server.run();
 }
 
