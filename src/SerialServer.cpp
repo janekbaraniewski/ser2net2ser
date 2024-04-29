@@ -31,21 +31,22 @@ void SerialServer::start_accept() {
 }
 
 void SerialServer::do_read_write() {
-    static boost::array<char, 128> buf;
+    // Asynchronous read from serial port
     serial_.async_read_some(boost::asio::buffer(buf), [this](boost::system::error_code ec, std::size_t length) {
-        if (!ec) {
+        if (!ec && length > 0) {
+            // Data is available
             async_write(socket_, boost::asio::buffer(buf, length), [this](boost::system::error_code ec, std::size_t) {
                 if (!ec) {
-                    BOOST_LOG_TRIVIAL(info) << "Data successfully written to client. Continuing read/write loop.";
-                    do_read_write();
+                    BOOST_LOG_TRIVIAL(info) << "Data successfully written to client.";
                 } else {
                     BOOST_LOG_TRIVIAL(error) << "Error writing to client: " << ec.message();
-                    socket_.close();
                 }
             });
+        } else if (!ec) {
+            BOOST_LOG_TRIVIAL(info) << "No data received from serial. Waiting...";
         } else {
             BOOST_LOG_TRIVIAL(error) << "Error reading from serial port: " << ec.message();
-            socket_.close();
         }
+        do_read_write();  // Continue the loop
     });
 }
