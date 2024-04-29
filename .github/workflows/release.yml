@@ -96,6 +96,9 @@ jobs:
         draft: false
         prerelease: false
 
+    - name: debug
+      run: ls -la artifacts/
+
     - name: Upload Release Assets
       run: |
         UPLOAD_URL="${{ steps.create_release.outputs.upload_url }}"
