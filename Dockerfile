@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 
 # Copy binaries from the builder stage
-COPY --from=builder /app/serial_client /app/serial_client
+COPY --from=builder /app/ser2net2ser /usr/local/bin/ser2net2ser
 
 # Command to run the application
-CMD ["./serial_client", "--server", "server_ip", "--port", "12345"]
+CMD ["ser2net2ser"]

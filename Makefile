@@ -23,33 +23,14 @@ test: build
 	@cd build && ctest
 
 build-images: ## Build container images
-build-images: build-server-image build-client-image
-
-build-server-image:
-	@docker build . -f Dockerfile.server -t $(REPO)-server:$(COMMIT_HASH)
-
-build-client-image:
-	@docker build . -f Dockerfile.client -t $(REPO)-client:$(COMMIT_HASH)
+	@docker build . -f Dockerfile -t $(REPO):$(COMMIT_HASH)
 
 tag-images: ## Tag container images
-tag-images: tag-server-image tag-client-image
-
-tag-server-image:
-	@docker tag $(REPO)-server:$(COMMIT_HASH) $(REPO)-server:$(VERSION)
-
-tag-client-image:
-	@docker tag $(REPO)-client:$(COMMIT_HASH) $(REPO)-client:$(VERSION)
+	@docker tag $(REPO):$(COMMIT_HASH) $(REPO):$(VERSION)
 
 
 push-images: ## Push container images to registry
-push-images: tag-images push-server-images push-client-images
-
-push-server-images:
-	@docker push $(REPO)-server:$(COMMIT_HASH)
-	@docker push $(REPO)-server:$(VERSION)
-
-push-client-images:
-	@docker push $(REPO)-client:$(COMMIT_HASH)
-	@docker push $(REPO)-client:$(VERSION)
+	@docker push $(REPO):$(COMMIT_HASH)
+	@docker push $(REPO):$(VERSION)
 
 .PHONY: clean build test build-images build-server-image build-client-image tag-images tag-client-image tag-server-image push-images push-client-images push-server-images help
