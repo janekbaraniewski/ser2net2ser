@@ -105,13 +105,17 @@ jobs:
         for file in artifacts/*; do
           if [ -s "$file" ]; then
             echo "Uploading $file"
+            # Extract the correct URL by removing the unnecessary template part
+            UPLOAD_URL="${{ steps.create_release.outputs.upload_url }}"
+            UPLOAD_URL="${UPLOAD_URL%\{*}" # Removes {?name,label}
+            FILE_NAME=$(basename "$file")
+
             curl -X POST \
               -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
               -H "Content-Type: multipart/form-data" \
               -F "file=@$file;type=$(file -b --mime-type $file)" \
-              -F "name=$(basename $file)" \
-              -F "label=$(basename $file)" \
-              "${{ steps.create_release.outputs.upload_url }}"
+              -F "name=${FILE_NAME}" \
+              "${UPLOAD_URL}?name=${FILE_NAME}"
           else
             echo "Skipping upload for empty file $file"
           fi
