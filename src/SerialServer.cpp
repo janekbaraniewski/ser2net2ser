@@ -10,11 +10,14 @@ SerialServer::SerialServer(boost::asio::io_service& io_service, const std::strin
     }
 
 void SerialServer::run() {
+    BOOST_LOG_TRIVIAL(info) << "SerialServer::run";
     start_accept();
     io_service_.run();
 }
 
 void SerialServer::start_accept() {
+    BOOST_LOG_TRIVIAL(info) << "SerialServer::start_accept";
+
     acceptor_.async_accept(socket_, [this](boost::system::error_code ec) {
         if (!ec) {
             handle_session();
@@ -24,11 +27,15 @@ void SerialServer::start_accept() {
 }
 
 void SerialServer::handle_session() {
+    BOOST_LOG_TRIVIAL(info) << "SerialServer::handle_session";
+
     async_read_socket();
     async_read_serial();
 }
 
 void SerialServer::async_read_socket() {
+    BOOST_LOG_TRIVIAL(info) << "SerialServer::async_read_socket";
+
     socket_.async_read_some(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
         if (!ec) {
             serial_port_.async_write(boost::asio::buffer(buffer_, length), [this](boost::system::error_code ec, std::size_t) {
@@ -46,6 +53,8 @@ void SerialServer::async_read_socket() {
 }
 
 void SerialServer::async_read_serial() {
+    BOOST_LOG_TRIVIAL(info) << "SerialServer::async_read_serial";
+
     serial_port_.async_read_some(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
         if (!ec) {
             boost::asio::async_write(socket_, boost::asio::buffer(buffer_, length), [this](boost::system::error_code ec, std::size_t) {
