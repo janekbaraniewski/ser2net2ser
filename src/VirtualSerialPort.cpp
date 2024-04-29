@@ -24,12 +24,36 @@ VirtualSerialPort::VirtualSerialPort(boost::asio::io_context& io_context, const 
     chown(device_name_.c_str(), -1, getgrnam("tty")->gr_gid);
 
     master_fd_.assign(master_fd);
+    setSerialAttributes(master_fd);
 }
-
-
 
 VirtualSerialPort::~VirtualSerialPort() {
     close();
+}
+
+void VirtualSerialPort::setSerialAttributes(int fd) {
+    struct termios tty;
+    memset(&tty, 0, sizeof tty);
+    if (tcgetattr(fd, &tty) != 0) {
+        BOOST_LOG_TRIVIAL(error) << "Error from tcgetattr: " << strerror(errno);
+        return;
+    }
+
+    cfmakeraw(&tty);  // Configure the terminal attributes to raw mode
+
+    tty.c_cflag |= (CLOCAL | CREAD);    // Ignore modem controls and enable receiver
+    tty.c_cflag &= ~CSIZE;
+    tty.c_cflag |= CS8;                 // 8-bit characters
+    tty.c_cflag &= ~PARENB;             // No parity bit
+    tty.c_cflag &= ~CSTOPB;             // Only need 1 stop bit
+    tty.c_cflag &= ~CRTSCTS;            // No hardware flow control
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off software flow control
+    tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); // Disable canonical mode, echo, and signal chars
+    tty.c_oflag &= ~OPOST;              // No output processing
+
+    if (tcsetattr(fd, TCSANOW, &tty) != 0) {
+        BOOST_LOG_TRIVIAL(error) << "Error from tcsetattr: " << strerror(errno);
+    }
 }
 
 void VirtualSerialPort::close() {

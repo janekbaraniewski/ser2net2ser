@@ -27,7 +27,7 @@ public:
     void close();
     void async_read(boost::asio::mutable_buffer buffer, std::function<void(const boost::system::error_code&, std::size_t)> handler);
     void async_write(boost::asio::const_buffer buffer, std::function<void(const boost::system::error_code&, std::size_t)> handler);
-
+    void setSerialAttributes(int fd);
     // bool write(const std::string& data);
     // std::string read();
 
