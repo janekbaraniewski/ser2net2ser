@@ -9,6 +9,14 @@
 #include <stdexcept>
 #include <iostream>
 #include <sys/stat.h>
+#include <boost/log/trivial.hpp>
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <grp.h>
 
 class VirtualSerialPort {
 public:
