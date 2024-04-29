@@ -28,24 +28,42 @@ void SerialClient::run() {
 
 void SerialClient::do_read_socket() {
     socket_.async_read_some(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
-        if (!ec) {
-            vsp_.async_write(boost::asio::buffer(buffer_, length), [this](boost::system::error_code ec, std::size_t) {
+        if (!ec && length > 0) {
+            std::string data(buffer_.data(), length);
+            std::fill(std::begin(buffer_), std::end(buffer_), 0);
+
+            BOOST_LOG_TRIVIAL(debug) << "Received from server: " << data;
+
+            vsp_.async_write(boost::asio::buffer(data), [this](boost::system::error_code ec, std::size_t) {
                 if (!ec) {
-                    do_read_socket();  // Continue reading from socket
+                    do_read_socket();
+                } else {
+                    BOOST_LOG_TRIVIAL(error) << "Write to VSP failed: " << ec.message();
                 }
             });
+        } else if (ec) {
+            BOOST_LOG_TRIVIAL(error) << "Read error on socket: " << ec.message();
         }
     });
 }
 
 void SerialClient::do_read_vsp() {
     vsp_.async_read(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
-        if (!ec) {
-            boost::asio::async_write(socket_, boost::asio::buffer(buffer_, length), [this](boost::system::error_code ec, std::size_t) {
+        if (!ec && length > 0) {
+            std::string data(buffer_.data(), length);
+            std::fill(std::begin(buffer_), std::end(buffer_), 0);
+
+            BOOST_LOG_TRIVIAL(debug) << "Received from VSP: " << data;
+
+            async_write(socket_, boost::asio::buffer(data), [this](boost::system::error_code ec, std::size_t) {
                 if (!ec) {
-                    do_read_vsp();  // Continue reading from VSP
+                    do_read_vsp();
+                } else {
+                    BOOST_LOG_TRIVIAL(error) << "Write to socket failed: " << ec.message();
                 }
             });
+        } else if (ec) {
+            BOOST_LOG_TRIVIAL(error) << "Read error on VSP: " << ec.message();
         }
     });
 }
