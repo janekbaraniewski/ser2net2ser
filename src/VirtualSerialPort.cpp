@@ -11,7 +11,7 @@ VirtualSerialPort::VirtualSerialPort(const std::string& device) : device_name_("
         throw std::runtime_error("Failed to get PTY slave name");
     }
 
-    unlink(device_name_.c_str());  // Ensure no stale symlink exists
+    unlink(device_name_.c_str());
     if (symlink(slave_name, device_name_.c_str()) != 0) {
         throw std::runtime_error("Failed to create symlink for PTY slave");
     }
@@ -21,7 +21,6 @@ VirtualSerialPort::VirtualSerialPort(const std::string& device) : device_name_("
         throw std::runtime_error("Failed to open PTY slave");
     }
 
-    // Set permissions to allow external applications to access the virtual serial port
     chmod(device_name_.c_str(), 0666);
 }
 
@@ -32,7 +31,7 @@ VirtualSerialPort::~VirtualSerialPort() {
 void VirtualSerialPort::close() {
     ::close(master_fd_);
     ::close(slave_fd_);
-    unlink(device_name_.c_str());  // Clean up the symlink on destruction
+    unlink(device_name_.c_str());
 }
 
 bool VirtualSerialPort::write(const std::string& data) {

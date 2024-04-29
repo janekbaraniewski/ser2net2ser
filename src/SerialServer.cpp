@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
         server.run();
     } catch (const std::exception& e) {
         BOOST_LOG_TRIVIAL(error) << "Exception: " << e.what();
-        return 1; // Ensure returning a non-zero value on error
+        return 1;
     }
     return 0;
 }
