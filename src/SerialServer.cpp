@@ -47,45 +47,45 @@ void SerialServer::do_read_write() {
     });
 }
 
-#ifndef UNIT_TEST
-int main(int argc, char* argv[]) {
-    init_logging();
-    io_service io;
-    tcp::acceptor acceptor(io, tcp::endpoint(tcp::v4(), 12345));
-    RealSerialPort realSerial(io);
+// #ifndef UNIT_TEST
+// int main(int argc, char* argv[]) {
+//     init_logging();
+//     io_service io;
+//     tcp::acceptor acceptor(io, tcp::endpoint(tcp::v4(), 12345));
+//     RealSerialPort realSerial(io);
 
-    try {
-        options_description desc{"Options"};
-        desc.add_options()
-            ("help,h", "Help screen")
-            ("device,d", value<string>()->default_value("/dev/ttyUSB0"), "Device name")
-            ("baud,b", value<unsigned int>()->default_value(9600), "Baud rate")
-            ("port,p", value<unsigned short>()->default_value(12345), "Port number");
+//     try {
+//         options_description desc{"Options"};
+//         desc.add_options()
+//             ("help,h", "Help screen")
+//             ("device,d", value<string>()->default_value("/dev/ttyUSB0"), "Device name")
+//             ("baud,b", value<unsigned int>()->default_value(9600), "Baud rate")
+//             ("port,p", value<unsigned short>()->default_value(12345), "Port number");
 
-        variables_map vm;
-        store(parse_command_line(argc, argv, desc), vm);
-        notify(vm);
+//         variables_map vm;
+//         store(parse_command_line(argc, argv, desc), vm);
+//         notify(vm);
 
-        if (vm.count("help")) {
-            std::cout << desc << std::endl;
-            return 0;
-        }
+//         if (vm.count("help")) {
+//             std::cout << desc << std::endl;
+//             return 0;
+//         }
 
-        string dev_name = vm["device"].as<string>();
-        unsigned int baud_rate = vm["baud"].as<unsigned int>();
-        unsigned short port = vm["port"].as<unsigned short>();
+//         string dev_name = vm["device"].as<string>();
+//         unsigned int baud_rate = vm["baud"].as<unsigned int>();
+//         unsigned short port = vm["port"].as<unsigned short>();
 
-        realSerial.open(dev_name);
-        realSerial.set_option(serial_port_base::baud_rate(baud_rate));
+//         realSerial.open(dev_name);
+//         realSerial.set_option(serial_port_base::baud_rate(baud_rate));
 
-        SerialServer server(io, realSerial, acceptor);
-        server.run();
-    } catch (const std::exception& e) {
-        BOOST_LOG_TRIVIAL(error) << "Exception: " << e.what();
-        return 1;
-    }
-    return 0;
-}
-#else
-#error "UNIT_TEST is defined!"
-#endif
+//         SerialServer server(io, realSerial, acceptor);
+//         server.run();
+//     } catch (const std::exception& e) {
+//         BOOST_LOG_TRIVIAL(error) << "Exception: " << e.what();
+//         return 1;
+//     }
+//     return 0;
+// }
+// #else
+// #error "UNIT_TEST is defined!"
+// #endif
