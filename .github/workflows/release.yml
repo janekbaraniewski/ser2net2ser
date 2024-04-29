@@ -97,14 +97,26 @@ jobs:
         prerelease: false
 
     - name: Upload Release Assets
-      uses: actions/upload-release-asset@v1
+      run: |
+        UPLOAD_URL="${{ steps.create_release.outputs.upload_url }}"
+        UPLOAD_URL="${UPLOAD_URL%\{*}" # Remove {?name,label} from URL
+        for file in /home/runner/work/ser2net2ser/ser2net2ser/artifacts/*; do
+          if [ -s "$file" ]; then # Check if file is not empty
+            FILE_NAME=$(basename "$file")
+            echo "Uploading $FILE_NAME"
+            curl -v -X POST \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: multipart/form-data" \
+              -F "file=@$file;type=$(file -b --mime-type $file)" \
+              -F "name=$FILE_NAME" \
+              "${UPLOAD_URL}?name=$FILE_NAME"
+          else
+            echo "Skipping upload for empty file $file"
+          fi
+        done
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ${{ github.workspace }}/artifacts/
-        asset_name: ${{ github.workspace }}/artifacts/*
-        asset_content_type: application/octet-stream
+
 
   container-image:
     runs-on: ubuntu-latest
