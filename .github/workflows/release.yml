@@ -70,7 +70,7 @@ jobs:
         name: ser2net2ser-${{ env.VERSION }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
         path: build/ser2net2ser-${{ env.VERSION }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
 
-  create-and-upload-release:
+  create-release:
     needs: build-and-release
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
@@ -96,30 +96,15 @@ jobs:
         draft: false
         prerelease: false
 
-    - name: debug upload url
-      run:
-        echo "${{ steps.create_release.outputs.upload_url }}"
-        ls -la artifacts
-
     - name: Upload Release Assets
-      run: |
-        for file in artifacts/*; do
-          if [ -s "$file" ]; then
-            echo "Uploading $file"
-            UPLOAD_URL="${{ steps.create_release.outputs.upload_url }}"
-            UPLOAD_URL="${UPLOAD_URL%\{*}" # Removes {?name,label}
-            FILE_NAME=$(basename "$file")
-
-            curl -X POST -vvv \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Content-Type: multipart/form-data" \
-              -F "file=@$file;type=$(file -b --mime-type $file)" \
-              -F "name=${FILE_NAME}" \
-              "${UPLOAD_URL}?name=${FILE_NAME}"
-          else
-            echo "Skipping upload for empty file $file"
-          fi
-        done
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ github.workspace }}/artifacts/
+        asset_name: ${{ github.workspace }}/artifacts/*
+        asset_content_type: application/octet-stream
 
   container-image:
     runs-on: ubuntu-latest
