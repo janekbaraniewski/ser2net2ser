@@ -96,17 +96,25 @@ jobs:
         draft: false
         prerelease: false
 
+    - name: debug upload url
+      run:
+        echo "${{ steps.create_release.outputs.upload_url }}"
+
     - name: Upload Release Assets
       run: |
         for file in artifacts/*; do
-          echo "Uploading $file"
-          curl -X POST \
-                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                -H "Content-Type: multipart/form-data" \
-                -F "file=@$file;type=$(file -b --mime-type $file)" \
-                -F "name=$(basename $file)" \
-                -F "label=$(basename $file)" \
-                "${{ steps.create_release.outputs.upload_url }}"
+          if [ -s "$file" ]; then
+            echo "Uploading $file"
+            curl -X POST \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: multipart/form-data" \
+              -F "file=@$file;type=$(file -b --mime-type $file)" \
+              -F "name=$(basename $file)" \
+              -F "label=$(basename $file)" \
+              "${{ steps.create_release.outputs.upload_url }}"
+          else
+            echo "Skipping upload for empty file $file"
+          fi
         done
 
 
