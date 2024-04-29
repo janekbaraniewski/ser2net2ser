@@ -50,6 +50,11 @@ jobs:
     - name: Set up CMake (All platforms)
       uses: lukka/get-cmake@latest
 
+    - name: Extract version from tag
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+      env:
+        GITHUB_REF: ${{ github.ref }}
+
     - name: Configure and Build
       run: |
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_ARCHITECTURE_ID=${{ matrix.config.arch }}
@@ -57,13 +62,13 @@ jobs:
 
     - name: Rename binary
       run: |
-        mv build/ser2net2ser build/ser2net2ser-${{ github.ref }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        mv build/ser2net2ser build/ser2net2ser-${{ env.VERSION }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: ser2net2ser-${{ matrix.config.os }}-${{ matrix.config.arch }}
-        path: build/ser2net2ser-${{ github.ref }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        name: ser2net2ser-${{ env.VERSION }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        path: build/ser2net2ser-${{ env.VERSION }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
 
   create-and-upload-release:
     needs: build-and-release
