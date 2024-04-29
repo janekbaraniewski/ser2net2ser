@@ -18,7 +18,8 @@ private:
 public:
     SerialClient(boost::asio::io_service& io_service, const std::string& server_ip, unsigned short server_port, const std::string& vsp_name);
     void run();
-    void do_read_write();
+    void do_read_vsp();
+    void do_read_socket();
 };
 
 #endif // CLIENT_H

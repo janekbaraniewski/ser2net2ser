@@ -1,48 +1,74 @@
 #include "SerialServer.h"
+#include <boost/log/trivial.hpp>
 
-using namespace boost::asio;
-using namespace boost::program_options;
-using ip::tcp;
-using std::string;
-using std::endl;
-
-SerialServer::SerialServer(io_service& io, ISerialPort& serial, tcp::acceptor& acceptor)
-    : io_service_(io), serial_(serial), acceptor_(acceptor), socket_(io) {
-    BOOST_LOG_TRIVIAL(info) << "Starting server and waiting for connection...";
-    start_accept();
-}
+SerialServer::SerialServer(boost::asio::io_service& io_service, const std::string& device, unsigned int baud_rate)
+    : io_service_(io_service),
+      acceptor_(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 3333)),
+      socket_(io_service),
+      serial_port_(io_service) {
+        serial_port_.open(device, boost::asio::serial_port_base::baud_rate(baud_rate));
+    }
 
 void SerialServer::run() {
-    BOOST_LOG_TRIVIAL(info) << "Server is running.";
+    BOOST_LOG_TRIVIAL(info) << "SerialServer::run";
+    start_accept();
+    BOOST_LOG_TRIVIAL(info) << "ioservice::run";
     io_service_.run();
-    BOOST_LOG_TRIVIAL(info) << "Server stopped.";
 }
 
 void SerialServer::start_accept() {
+    BOOST_LOG_TRIVIAL(info) << "SerialServer::start_accept";
+
     acceptor_.async_accept(socket_, [this](boost::system::error_code ec) {
+        BOOST_LOG_TRIVIAL(info) << "SerialServer::acceptor::async_accept";
         if (!ec) {
-            BOOST_LOG_TRIVIAL(info) << "Client connected. Starting to handle read/write operations.";
-            do_read_write();
-        } else {
-            BOOST_LOG_TRIVIAL(error) << "Error accepting connection: " << ec.message();
+            handle_session();
         }
+        start_accept();
     });
 }
 
-void SerialServer::do_read_write() {
-    static boost::array<char, 128> buf;
-    serial_.async_read_some(boost::asio::buffer(buf), [this](boost::system::error_code ec, std::size_t length) {
+void SerialServer::handle_session() {
+    BOOST_LOG_TRIVIAL(info) << "SerialServer::handle_session";
+
+    async_read_socket();
+    async_read_serial();
+}
+
+void SerialServer::async_read_socket() {
+    BOOST_LOG_TRIVIAL(info) << "SerialServer::async_read_socket";
+
+    socket_.async_read_some(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
         if (!ec) {
-            async_write(socket_, boost::asio::buffer(buf, length), [this](boost::system::error_code ec, std::size_t) {
+            serial_port_.async_write(boost::asio::buffer(buffer_, length), [this](boost::system::error_code ec, std::size_t) {
                 if (!ec) {
-                    BOOST_LOG_TRIVIAL(info) << "Data successfully written to client. Continuing read/write loop.";
-                    do_read_write();
+                    async_read_socket();
                 } else {
                     BOOST_LOG_TRIVIAL(error) << "Error writing to client: " << ec.message();
                 }
             });
         } else {
-            BOOST_LOG_TRIVIAL(error) << "Error reading from serial port: " << ec.message();
+            BOOST_LOG_TRIVIAL(error) << "Read error on socket: " << ec.message();
+            socket_.close();
+        }
+    });
+}
+
+void SerialServer::async_read_serial() {
+    BOOST_LOG_TRIVIAL(info) << "SerialServer::async_read_serial";
+
+    serial_port_.async_read_some(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
+        if (!ec) {
+            boost::asio::async_write(socket_, boost::asio::buffer(buffer_, length), [this](boost::system::error_code ec, std::size_t) {
+                if (!ec) {
+                    async_read_serial();
+                } else {
+                    BOOST_LOG_TRIVIAL(error) << "Error sending to socket: " << ec.message();
+                }
+            });
+        } else {
+            BOOST_LOG_TRIVIAL(error) << "Read error on serial port: " << ec.message();
+            socket_.close();
         }
     });
 }

@@ -1,28 +1,22 @@
 #ifndef VIRTUALSERIALPORT_H
 #define VIRTUALSERIALPORT_H
 
-#include <string>
-#include <functional>
-#include <fcntl.h>
-#include <unistd.h>
-#include <termios.h>
-#include <stdexcept>
-#include <iostream>
-#include <sys/stat.h>
+#include "common.hpp"
+#include <grp.h>
 
 class VirtualSerialPort {
 public:
-    VirtualSerialPort(const std::string& device);
+    VirtualSerialPort(boost::asio::io_context& io_context, const std::string& device);
     ~VirtualSerialPort();
 
+    void async_read(boost::asio::mutable_buffer buffer, std::function<void(const boost::system::error_code&, std::size_t)> handler);
+    void async_write(boost::asio::const_buffer buffer, std::function<void(const boost::system::error_code&, std::size_t)> handler);
     void close();
-    bool write(const std::string& data);
-    std::string read();
 
 private:
-    int master_fd_;
-    int slave_fd_;
+    boost::asio::posix::stream_descriptor master_fd_;
     std::string device_name_;
+    void setup_pty(int fd);
 };
 
 #endif // VIRTUALSERIALPORT_H
