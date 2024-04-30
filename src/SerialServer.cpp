@@ -17,10 +17,7 @@ void SerialServer::run() {
 }
 
 void SerialServer::start_accept() {
-    BOOST_LOG_TRIVIAL(info) << "SerialServer::start_accept";
-
     acceptor_.async_accept(socket_, [this](boost::system::error_code ec) {
-        BOOST_LOG_TRIVIAL(info) << "SerialServer::acceptor::async_accept";
         if (!ec) {
             handle_session();
         }
