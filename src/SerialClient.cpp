@@ -28,10 +28,9 @@ void SerialClient::run() {
 }
 
 void SerialClient::do_read_socket() {
-    socket_.async_read_some(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
+    socket_.async_read_some(boost::asio::buffer(socket_buffer_), [this](boost::system::error_code ec, std::size_t length) {
         if (!ec) {
-            std::string data(buffer_.begin(), buffer_.begin() + length);
-            BOOST_LOG_TRIVIAL(debug) << "Received from server: " << data;
+            std::string data(socket_buffer_.begin(), socket_buffer_.begin() + length);
             vsp_.async_write(boost::asio::buffer(data), [this](boost::system::error_code ec, std::size_t) {
                 if (!ec) {
                     do_read_socket();
@@ -46,11 +45,10 @@ void SerialClient::do_read_socket() {
 }
 
 void SerialClient::do_read_vsp() {
-    vsp_.async_read(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
+    vsp_.async_read(boost::asio::buffer(vsp_buffer_), [this](boost::system::error_code ec, std::size_t length) {
         if (!ec) {
-            std::string data(buffer_.begin(), buffer_.begin() + length);
-            BOOST_LOG_TRIVIAL(debug) << "Received from VSP: " << data;
-            async_write(socket_, boost::asio::buffer(data), [this](boost::system::error_code ec, std::size_t) {
+            std::string data(vsp_buffer_.begin(), vsp_buffer_.begin() + length);
+            boost::asio::async_write(socket_, boost::asio::buffer(data), [this](boost::system::error_code ec, std::size_t) {
                 if (!ec) {
                     do_read_vsp();
                 } else {

@@ -12,8 +12,9 @@ class SerialClient {
 private:
     boost::asio::io_service& io_service_;
     boost::asio::ip::tcp::socket socket_;
-    std::array<char, 256> buffer_;
-    VirtualSerialPort vsp_;  // Declare the VirtualSerialPort object
+    std::array<char, 256> socket_buffer_;
+    std::array<char, 256> vsp_buffer_;
+    VirtualSerialPort vsp_;
 
 public:
     SerialClient(boost::asio::io_service& io_service, const std::string& server_ip, unsigned short server_port, const std::string& vsp_name);
