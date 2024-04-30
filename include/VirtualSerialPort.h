@@ -15,7 +15,9 @@ public:
 
 private:
     boost::asio::posix::stream_descriptor master_fd_;
+    std::array<char, 1024> read_buffer_;
     std::string device_name_;
+
     void setup_pty(int fd);
 };
 

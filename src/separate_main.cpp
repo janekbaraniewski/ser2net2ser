@@ -5,7 +5,7 @@
 int main() {
     try {
         boost::asio::io_context io_context;
-        std::string device = "ttyUSB0"; // Adjust the device name as needed
+        std::string device = "ttyUSB9"; // Adjust the device name as needed
 
         // Instantiate your VirtualSerialPort
         VirtualSerialPort vsp(io_context, device);
