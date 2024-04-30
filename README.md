@@ -1,6 +1,6 @@
 # ser2net2ser
 
-> This still needs testing
+> WIP: server seems to work fine, client still has some issues
 
 ## Requirements
 
