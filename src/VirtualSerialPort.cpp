@@ -66,9 +66,47 @@ void VirtualSerialPort::close() {
 }
 
 void VirtualSerialPort::async_read(boost::asio::mutable_buffer buffer, std::function<void(const boost::system::error_code&, std::size_t)> handler) {
-    boost::asio::async_read(master_fd_, buffer, handler);
+    boost::asio::async_read(master_fd_, buffer,
+        [this, buffer, handler](const boost::system::error_code& ec, std::size_t length) {
+            if (!ec && length > 0) {
+                // Convert the buffer to a string for logging
+                std::string data(boost::asio::buffer_cast<const char*>(buffer), length);
+                // Log the hexadecimal values of the data read
+                std::stringstream hex_stream;
+                hex_stream << std::hex << std::setfill('0');
+                for(unsigned char c : data) {
+                    hex_stream << std::setw(2) << static_cast<int>(c) << " ";
+                }
+                BOOST_LOG_TRIVIAL(info) << "Read from VSP: " << hex_stream.str();
+
+                // Continue with the original handler
+                handler(ec, length);
+            } else if (ec) {
+                BOOST_LOG_TRIVIAL(error) << "Read error on VSP: " << ec.message();
+                handler(ec, 0);
+            }
+        });
 }
 
+
 void VirtualSerialPort::async_write(boost::asio::const_buffer buffer, std::function<void(const boost::system::error_code&, std::size_t)> handler) {
-    boost::asio::async_write(master_fd_, buffer, handler);
+    // Log the data about to be written in hexadecimal format for clarity
+    std::string data(boost::asio::buffer_cast<const char*>(buffer), boost::asio::buffer_size(buffer));
+    std::stringstream hex_stream;
+    hex_stream << std::hex << std::setfill('0');
+    for (unsigned char c : data) {
+        hex_stream << std::setw(2) << static_cast<int>(c) << " ";
+    }
+    BOOST_LOG_TRIVIAL(info) << "Writing to VSP: " << hex_stream.str();
+
+    // Perform the async_write operation with the provided buffer and handler
+    boost::asio::async_write(master_fd_, buffer,
+        [this, handler](const boost::system::error_code& ec, std::size_t length) {
+            if (!ec) {
+                BOOST_LOG_TRIVIAL(info) << "Successfully written " << length << " bytes to VSP";
+            } else {
+                BOOST_LOG_TRIVIAL(error) << "Write error on VSP: " << ec.message();
+            }
+            handler(ec, length);
+        });
 }
