@@ -121,7 +121,7 @@ void VirtualSerialPort::async_read(boost::asio::mutable_buffer buffer, std::func
     bytes_read = read(master_fd_.native_handle(), buffer.data(), sizeof(buffer_) - 1);
     if (bytes_read == -1) {
         std::cerr << "Error reading from PTY: " << strerror(errno) << std::endl;
-        return;
+        handler(boost::system::error_code(), -1);
     }
 
     buffer_[bytes_read] = '\0'; // Null-terminate string
