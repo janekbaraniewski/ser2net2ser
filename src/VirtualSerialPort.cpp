@@ -125,8 +125,8 @@ void VirtualSerialPort::async_read(boost::asio::mutable_buffer buffer, std::func
         handler(boost::system::error_code(1, boost::asio::error::get_system_category()), -1);
     }
 
-    // buffer[bytes_read] = '\0'; // Null-terminate string
-    BOOST_LOG_TRIVIAL(info) << "READ FROM SERIAL!!!! -> " << buffer;
+    buffer += '\0'; // Null-terminate string
+    BOOST_LOG_TRIVIAL(info) << "READ FROM SERIAL!!!! -> ";
     handler(boost::system::error_code(), bytes_read);
 }
 
