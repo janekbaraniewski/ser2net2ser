@@ -79,14 +79,13 @@ VirtualSerialPort::~VirtualSerialPort() {
 }
 
 ssize_t VirtualSerialPort::async_read(char* buffer, unsigned int length) {
-    Logger(Logger::Level::Info) << "VSP::async_read";
-    ssize_t bytes_read = read(master_fd_raw_, buffer, length);
-    Logger(Logger::Level::Info) << "READ FROM SERIAL!!!! -> ";
-    return bytes_read;
+    // Logger(Logger::Level::Info) << "VSP::async_read";
+    return read(master_fd_raw_, buffer, length);
 }
 
 
 ssize_t VirtualSerialPort::async_write(const char* buffer, unsigned int length) {
+    // Logger(Logger::Level::Info) << "VSP::async_write";
     return write(master_fd_raw_, buffer, length);
 }
 
