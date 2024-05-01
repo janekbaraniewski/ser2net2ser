@@ -43,18 +43,6 @@ target_link_libraries(core_lib PRIVATE
   pthread
 )
 
-add_executable(separate_main src/separate_main.cpp)
-target_link_libraries(separate_main PRIVATE
-  Boost::system
-  Boost::program_options
-  Boost::log
-  Boost::log_setup
-  Boost::date_time
-  core_lib
-  pthread
-)
-
-
 add_executable(ser2net2ser src/main.cpp)
 target_link_libraries(ser2net2ser PRIVATE
   core_lib

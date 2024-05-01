@@ -3,8 +3,9 @@
 VirtualSerialPort::VirtualSerialPort(boost::asio::io_context& io_context, const std::string& device)
     : master_fd_(io_context), slave_fd_(io_context), device_name_("/dev/" + device) {
     std::lock_guard<std::mutex> lock(mutex_);
-    char *slave_name;
-    int master_fd = posix_openpt(O_RDWR | O_NOCTTY);
+    int master_fd, slave_fd;
+    char* slave_name;
+    master_fd = posix_openpt(O_RDWR | O_NOCTTY);
     if (master_fd == -1) {
         BOOST_LOG_TRIVIAL(error) << "Failed to open PTY master: " << strerror(errno);
         throw std::runtime_error("Failed to open PTY master");
@@ -26,7 +27,7 @@ VirtualSerialPort::VirtualSerialPort(boost::asio::io_context& io_context, const 
     BOOST_LOG_TRIVIAL(info) << "Symlink for PTY slave created successfully";
 
     // Open the slave pseudoterminal
-    int slave_fd = open(slave_name, O_RDWR);
+    slave_fd = open(slave_name, O_RDWR);
     if (slave_fd == -1) {
         BOOST_LOG_TRIVIAL(error) << "Failed to create symlink for PTY slave: " << strerror(errno);
         throw std::runtime_error("Failed to open the slave pseudoterminal");
@@ -85,58 +86,15 @@ VirtualSerialPort::~VirtualSerialPort() {
     close();
 }
 
-void VirtualSerialPort::async_read(boost::asio::mutable_buffer buffer, std::function<void(const boost::system::error_code&, std::size_t)> handler) {
+ssize_t VirtualSerialPort::async_read(char* buffer, unsigned int length) {
     BOOST_LOG_TRIVIAL(info) << "VSP::async_read";
-    // boost::asio::async_read(master_fd_, buffer,
-    //     [this, buffer, handler](const boost::system::error_code& ec, std::size_t length) {
-    //         if (!ec && length > 0) {
-    //             BOOST_LOG_TRIVIAL(info) << "VSP::async_read::success";
-    //             std::string data(boost::asio::buffer_cast<const char*>(buffer), length);
-    //             std::stringstream hex_stream;
-    //             hex_stream << std::hex << std::setfill('0');
-    //             for(unsigned char c : data) {
-    //                 hex_stream << std::setw(2) << static_cast<int>(c) << " ";
-    //             }
-    //             BOOST_LOG_TRIVIAL(info) << "Read from VSP: " << hex_stream.str();
-
-    //             handler(ec, length);
-    //         } else if (ec) {
-    //             BOOST_LOG_TRIVIAL(error) << "Read error on VSP: " << ec.message();
-    //             handler(ec, 0);
-    //         }
-    //     });
-    // char buffer_[256];
-    ssize_t bytes_read;
-    bytes_read = read(master_fd_.native_handle(), buffer.data(), sizeof(buffer) - 1);
-    if (bytes_read == -1) {
-        std::cerr << "Error reading from PTY: " << strerror(errno) << std::endl;
-
-        boost::system::detail::generic_error_category_message(1);
-        handler(boost::system::error_code(1, boost::asio::error::get_system_category()), -1);
-    }
-
-    buffer += '\0'; // Null-terminate string
+    ssize_t bytes_read = read(master_fd_.native_handle(), buffer, length);
     BOOST_LOG_TRIVIAL(info) << "READ FROM SERIAL!!!! -> ";
-    handler(boost::system::error_code(), bytes_read);
+    return bytes_read;
 }
 
 
-void VirtualSerialPort::async_write(boost::asio::const_buffer buffer, std::function<void(const boost::system::error_code&, std::size_t)> handler) {
-    std::string data(boost::asio::buffer_cast<const char*>(buffer), boost::asio::buffer_size(buffer));
-    std::stringstream hex_stream;
-    hex_stream << std::hex << std::setfill('0');
-    for (unsigned char c : data) {
-        hex_stream << std::setw(2) << static_cast<int>(c) << " ";
-    }
-    // BOOST_LOG_TRIVIAL(info) << "Writing to VSP: " << hex_stream.str();
-
-    boost::asio::async_write(master_fd_, buffer,
-        [this, handler](const boost::system::error_code& ec, std::size_t length) {
-            if (!ec) {
-                // BOOST_LOG_TRIVIAL(info) << "Successfully written " << length << " bytes to VSP";
-            } else {
-                BOOST_LOG_TRIVIAL(error) << "Write error on VSP: " << ec.message();
-            }
-            handler(ec, length);
-        });
+ssize_t VirtualSerialPort::async_write(const char* buffer, unsigned int length) {
+    return write(master_fd_.native_handle(), buffer, length);
 }
+
