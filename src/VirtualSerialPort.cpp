@@ -96,7 +96,6 @@ VirtualSerialPort::~VirtualSerialPort() {
 }
 
 void VirtualSerialPort::async_read(boost::asio::mutable_buffer buffer, std::function<void(const boost::system::error_code&, std::size_t)> handler) {
-    std::lock_guard<std::mutex> lock(mutex_);
     BOOST_LOG_TRIVIAL(info) << "VSP::async_read";
     // boost::asio::async_read(master_fd_, buffer,
     //     [this, buffer, handler](const boost::system::error_code& ec, std::size_t length) {
@@ -133,7 +132,6 @@ void VirtualSerialPort::async_read(boost::asio::mutable_buffer buffer, std::func
 
 
 void VirtualSerialPort::async_write(boost::asio::const_buffer buffer, std::function<void(const boost::system::error_code&, std::size_t)> handler) {
-    std::lock_guard<std::mutex> lock(mutex_);
     std::string data(boost::asio::buffer_cast<const char*>(buffer), boost::asio::buffer_size(buffer));
     std::stringstream hex_stream;
     hex_stream << std::hex << std::setfill('0');
