@@ -28,14 +28,16 @@ void SerialClient::run() {
 }
 
 void SerialClient::do_read_socket() {
-    BOOST_LOG_TRIVIAL(info) << "Attempting to read from socket...";
+    // WIP: This seems to work fine
+    // BOOST_LOG_TRIVIAL(info) << "Attempting to read from socket...";
     socket_.async_read_some(boost::asio::buffer(socket_buffer_), [this](boost::system::error_code ec, std::size_t length) {
         if (!ec && length > 0) {
             std::string data(socket_buffer_.begin(), socket_buffer_.begin() + length);
-            BOOST_LOG_TRIVIAL(info) << "Received from server: " << data;
+            // BOOST_LOG_TRIVIAL(info) << "Received from server: " << data;
             vsp_.async_write(boost::asio::buffer(data), [this](boost::system::error_code ec, std::size_t) {
                 if (!ec) {
-                    BOOST_LOG_TRIVIAL(info) << "Data written to VSP";
+                    // WIP: We get here and read socket again, dawta is written to vsp fine, everything works
+                    // BOOST_LOG_TRIVIAL(info) << "Data written to VSP";
                     do_read_socket();
                 } else {
                     BOOST_LOG_TRIVIAL(error) << "Write to VSP failed: " << ec.message();
