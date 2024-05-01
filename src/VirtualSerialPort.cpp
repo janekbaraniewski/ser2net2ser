@@ -1,6 +1,6 @@
 #include "VirtualSerialPort.h"
 
-VirtualSerialPort::VirtualSerialPort(boost::asio::io_context& io_context, const std::string& device)
+VirtualSerialPort::VirtualSerialPort(const std::string& device)
     : device_name_("/dev/" + device) {
     std::lock_guard<std::mutex> lock(mutex_);
     char* slave_name;

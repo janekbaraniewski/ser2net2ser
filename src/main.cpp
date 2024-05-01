@@ -20,7 +20,7 @@ void setup_and_run_server(io_service& io, const variables_map& vm) {
 }
 
 void setup_and_run_client(io_service& io, const variables_map& vm) {
-    SerialClient client(io, vm["server"].as<string>(), vm["port"].as<unsigned short>(), vm["vsp"].as<string>());
+    SerialClient client(vm["server"].as<string>(), vm["port"].as<unsigned short>(), vm["vsp"].as<string>());
     client.run();
 }
 

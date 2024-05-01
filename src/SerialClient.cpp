@@ -1,15 +1,12 @@
 #include "SerialClient.h"
 
-using namespace boost::asio;
-using namespace boost::program_options;
-using ip::tcp;
 using std::string;
 using std::cout;
 using std::cerr;
 using std::endl;
 
-SerialClient::SerialClient(boost::asio::io_service& io_service, const std::string& server_ip, unsigned short server_port, const std::string& vsp_name)
-    : vsp_(io_service, vsp_name) {
+SerialClient::SerialClient(const std::string& server_ip, unsigned short server_port, const std::string& vsp_name)
+    : vsp_(vsp_name) {
     Logger(Logger::Level::Info)  << "Initializing client...";
     Logger(Logger::Level::Info)  << "Connecting to server at " << server_ip << ":" << server_port;
     socketClient_.connectToServer(server_ip.c_str(), server_port);
