@@ -52,7 +52,8 @@ void SerialServer::async_read_socket() {
 }
 
 void SerialServer::async_read_serial() {
-    BOOST_LOG_TRIVIAL(info) << "SerialServer::async_read_serial";
+    // WIP: this works fine
+    // BOOST_LOG_TRIVIAL(info) << "SerialServer::async_read_serial";
 
     serial_port_.async_read_some(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
         if (!ec) {
