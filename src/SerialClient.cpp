@@ -9,12 +9,12 @@ using std::cerr;
 using std::endl;
 
 SerialClient::SerialClient(boost::asio::io_service& io_service, const std::string& server_ip, unsigned short server_port, const std::string& vsp_name)
-    : io_service_(io_service), socket_(io_service), vsp_(io_service, vsp_name) {
-    BOOST_LOG_TRIVIAL(info) << "Initializing client...";
-    BOOST_LOG_TRIVIAL(info) << "Connecting to server at " << server_ip << ":" << server_port;
+    : vsp_(io_service, vsp_name) {
+    std::cout << "Initializing client...";
+    std::cout << "Connecting to server at " << server_ip << ":" << server_port;
     socketClient_.connectToServer(server_ip.c_str(), server_port);
-    BOOST_LOG_TRIVIAL(info) << "Connected to server.";
-    BOOST_LOG_TRIVIAL(info) << "Opening virtual serial port: " << vsp_name;
+    std::cout << "Connected to server.";
+    std::cout << "Opening virtual serial port: " << vsp_name;
 }
 
 void SerialClient::run() {
