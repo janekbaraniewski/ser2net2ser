@@ -98,24 +98,34 @@ VirtualSerialPort::~VirtualSerialPort() {
 void VirtualSerialPort::async_read(boost::asio::mutable_buffer buffer, std::function<void(const boost::system::error_code&, std::size_t)> handler) {
     std::lock_guard<std::mutex> lock(mutex_);
     BOOST_LOG_TRIVIAL(info) << "VSP::async_read";
-    boost::asio::async_read(master_fd_, buffer,
-        [this, buffer, handler](const boost::system::error_code& ec, std::size_t length) {
-            if (!ec && length > 0) {
-                BOOST_LOG_TRIVIAL(info) << "VSP::async_read::success";
-                std::string data(boost::asio::buffer_cast<const char*>(buffer), length);
-                std::stringstream hex_stream;
-                hex_stream << std::hex << std::setfill('0');
-                for(unsigned char c : data) {
-                    hex_stream << std::setw(2) << static_cast<int>(c) << " ";
-                }
-                BOOST_LOG_TRIVIAL(info) << "Read from VSP: " << hex_stream.str();
+    // boost::asio::async_read(master_fd_, buffer,
+    //     [this, buffer, handler](const boost::system::error_code& ec, std::size_t length) {
+    //         if (!ec && length > 0) {
+    //             BOOST_LOG_TRIVIAL(info) << "VSP::async_read::success";
+    //             std::string data(boost::asio::buffer_cast<const char*>(buffer), length);
+    //             std::stringstream hex_stream;
+    //             hex_stream << std::hex << std::setfill('0');
+    //             for(unsigned char c : data) {
+    //                 hex_stream << std::setw(2) << static_cast<int>(c) << " ";
+    //             }
+    //             BOOST_LOG_TRIVIAL(info) << "Read from VSP: " << hex_stream.str();
 
-                handler(ec, length);
-            } else if (ec) {
-                BOOST_LOG_TRIVIAL(error) << "Read error on VSP: " << ec.message();
-                handler(ec, 0);
-            }
-        });
+    //             handler(ec, length);
+    //         } else if (ec) {
+    //             BOOST_LOG_TRIVIAL(error) << "Read error on VSP: " << ec.message();
+    //             handler(ec, 0);
+    //         }
+    //     });
+    char buffer_[256];
+    ssize_t bytes_read;
+    while ((bytes_read = read(master_fd_.native_handle(), buffer_, sizeof(buffer_) - 1)) > 0) {
+        buffer_[bytes_read] = '\0'; // Null-terminate string
+        BOOST_LOG_TRIVIAL(info) << "READ FROM SERIAL!!!! -> " << buffer_;
+    }
+
+    if (bytes_read == -1) {
+        std::cerr << "Error reading from PTY: " << strerror(errno) << std::endl;
+    }
 }
 
 
