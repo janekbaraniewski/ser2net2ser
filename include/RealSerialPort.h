@@ -31,7 +31,7 @@ public:
     }
 
     void async_read_some(const boost::asio::mutable_buffer& buffer, std::function<void(const boost::system::error_code&, std::size_t)> handler) override {
-        BOOST_LOG_TRIVIAL(info) << "Read some.";
+        // BOOST_LOG_TRIVIAL(info) << "Read some.";
         if (!port.is_open()) {
             BOOST_LOG_TRIVIAL(error) << "Attempt to read from a closed serial port.";
             return;
