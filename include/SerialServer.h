@@ -2,26 +2,28 @@
 #define SERIALSERVER_H
 
 #include "RealSerialPort.h"
-#include <boost/asio.hpp>
-#include <array>
+#include <string>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
 
 class SerialServer {
 public:
-    SerialServer(boost::asio::io_service& io_service, const std::string& device, unsigned int baud_rate);
+    SerialServer(const std::string& device, unsigned int baudRate, unsigned int port);
+    ~SerialServer();
 
     void run();
 
 private:
-    void start_accept();
-    void handle_session();
-    void async_read_socket();
-    void async_read_serial();
-
-    boost::asio::io_service& io_service_;
-    boost::asio::ip::tcp::acceptor acceptor_;
-    boost::asio::ip::tcp::socket socket_;
+    int server_sock;
+    int client_sock;
     RealSerialPort serial_port_;
     std::array<char, 1024> buffer_;
+
+    void start_accept();
+    void handle_session(int client_sock);
+    void async_read_socket(int client_sock);
+    void async_read_serial(int client_sock);
 };
 
 #endif // SERIALSERVER_H

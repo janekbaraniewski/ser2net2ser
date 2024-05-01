@@ -3,7 +3,6 @@
 ## Requirements
 
 - Linux or macOS operating system
-- Boost libraries (system, program_options, log_setup, log, date_time)
 - CMake for building the project
 - Docker (optional) for containerization
 

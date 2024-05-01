@@ -8,10 +8,6 @@
 #include <unistd.h>
 #include <termios.h>
 
-#include <boost/asio.hpp>
-#include <boost/array.hpp>
-#include <boost/program_options.hpp>
-
 #include "Logger.h"
 
 #endif // COMMON_HPP

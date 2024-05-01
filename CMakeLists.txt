@@ -4,9 +4,6 @@ project(SerialNetworkBridge LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find Boost libraries
-find_package(Boost 1.65 REQUIRED COMPONENTS system program_options log_setup log date_time)
-
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -24,14 +21,15 @@ endif()
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Create core library without Logger.cpp, which is now in the logging library
-add_library(core_lib src/Logger.cpp src/SerialServer.cpp src/SerialClient.cpp src/VirtualSerialPort.cpp)
+add_library(core_lib
+  src/Logger.cpp
+  src/RealSerialPort.cpp
+  src/SerialServer.cpp
+  src/SerialClient.cpp
+  src/VirtualSerialPort.cpp
+)
 target_include_directories(core_lib PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(core_lib PUBLIC
-  Boost::system
-  Boost::program_options
-  Boost::log
-  Boost::log_setup
-  Boost::date_time
   pthread
 )
 
@@ -39,6 +37,4 @@ target_link_libraries(core_lib PUBLIC
 add_executable(ser2net2ser src/main.cpp)
 target_link_libraries(ser2net2ser PRIVATE
   core_lib
-  Boost::system
-  Boost::program_options
 )

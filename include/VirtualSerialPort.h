@@ -3,6 +3,7 @@
 
 #include "common.hpp"
 #include <grp.h>
+#include <sys/stat.h>
 
 class VirtualSerialPort {
 public:

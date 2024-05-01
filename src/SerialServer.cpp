@@ -1,71 +1,79 @@
 #include "SerialServer.h"
+#include <iostream>
+#include <fcntl.h>
+#include <cstring>
+#include <errno.h>
 
-SerialServer::SerialServer(boost::asio::io_service& io_service, const std::string& device, unsigned int baud_rate)
-    : io_service_(io_service),
-      acceptor_(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 3333)),
-      socket_(io_service),
-      serial_port_(io_service) {
-        serial_port_.open(device, boost::asio::serial_port_base::baud_rate(baud_rate));
+SerialServer::SerialServer(const std::string& device, unsigned int baud_rate, unsigned int port)
+    : serial_port_(device, baud_rate) {
+    struct sockaddr_in serv_addr;
+
+    server_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_sock < 0) {
+        std::cerr << "ERROR opening socket";
+        exit(1);
     }
 
+    memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(port);
+
+    if (bind(server_sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        std::cerr << "ERROR on binding: " << strerror(errno);
+        exit(1);
+    }
+
+    listen(server_sock, 5);
+}
+
+SerialServer::~SerialServer() {
+    close(server_sock);
+}
+
 void SerialServer::run() {
-    Logger(Logger::Level::Info) << "SerialServer::run";
+    std::cout << "SerialServer::run";
     start_accept();
-    Logger(Logger::Level::Info) << "ioservice::run";
-    io_service_.run();
 }
 
 void SerialServer::start_accept() {
-    acceptor_.async_accept(socket_, [this](boost::system::error_code ec) {
-        if (!ec) {
-            handle_session();
-        }
-        start_accept();
-    });
+    struct sockaddr_in cli_addr;
+    socklen_t clilen = sizeof(cli_addr);
+
+    client_sock = accept(server_sock, (struct sockaddr *)&cli_addr, &clilen);
+    if (client_sock < 0) {
+        std::cerr << "ERROR on accept: " << strerror(errno);
+        return;
+    }
+    handle_session(client_sock);
 }
 
-void SerialServer::handle_session() {
-    Logger(Logger::Level::Info) << "SerialServer::handle_session";
-
-    async_read_socket();
-    async_read_serial();
+void SerialServer::handle_session(int client_sock) {
+    std::cout << "SerialServer::handle_session";
+    async_read_socket(client_sock);
+    async_read_serial(client_sock);
 }
 
-void SerialServer::async_read_socket() {
-    Logger(Logger::Level::Info) << "SerialServer::async_read_socket";
+void SerialServer::async_read_socket(int client_sock) {
+    std::cout << "SerialServer::async_read_socket";
+    ssize_t length = read(client_sock, buffer_.data(), buffer_.size());
 
-    socket_.async_read_some(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
-        if (!ec) {
-            serial_port_.async_write(boost::asio::buffer(buffer_, length), [this](boost::system::error_code ec, std::size_t) {
-                if (!ec) {
-                    async_read_socket();
-                } else {
-                    Logger(Logger::Level::Error) << "Error writing to client: " << ec.message();
-                }
-            });
-        } else {
-            Logger(Logger::Level::Error) << "Read error on socket: " << ec.message();
-            socket_.close();
-        }
-    });
+    if (length > 0) {
+        serial_port_.async_write(buffer_.data(), length);
+    } else if (length < 0) {
+        std::cerr << "Read error on socket: " << strerror(errno);
+        close(client_sock);
+    }
 }
 
-void SerialServer::async_read_serial() {
-    // WIP: this works fine
-    // BOOST_LOG_TRIVIAL(info) << "SerialServer::async_read_serial";
+void SerialServer::async_read_serial(int client_sock) {
+    std::cout << "SerialServer::async_read_serial";
+    ssize_t length = serial_port_.async_read_some(buffer_.data(), buffer_.size());
 
-    serial_port_.async_read_some(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
-        if (!ec) {
-            boost::asio::async_write(socket_, boost::asio::buffer(buffer_, length), [this](boost::system::error_code ec, std::size_t) {
-                if (!ec) {
-                    async_read_serial();
-                } else {
-                    Logger(Logger::Level::Error) << "Error sending to socket: " << ec.message();
-                }
-            });
-        } else {
-            Logger(Logger::Level::Error) << "Read error on serial port: " << ec.message();
-            socket_.close();
-        }
-    });
+    if (length > 0) {
+        write(client_sock, buffer_.data(), length);
+    } else if (length < 0) {
+        std::cerr << "Read error on serial port: " << strerror(errno);
+        close(client_sock);
+    }
 }

@@ -31,16 +31,16 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Install dependencies (Ubuntu)
-      if: startsWith(matrix.config.os, 'ubuntu')
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libboost-all-dev
+    # - name: Install dependencies (Ubuntu)
+    #   if: startsWith(matrix.config.os, 'ubuntu')
+    #   run: |
+    #     sudo apt-get update
+    #     sudo apt-get install -y libboost-all-dev
 
-    - name: Install dependencies (macOS)
-      if: startsWith(matrix.config.os, 'macos')
-      run: |
-        brew install boost
+    # - name: Install dependencies (macOS)
+    #   if: startsWith(matrix.config.os, 'macos')
+    #   run: |
+    #     brew install boost
 
     - name: Install dependencies (Windows)
       if: startsWith(matrix.config.os, 'windows')
