@@ -1,7 +1,7 @@
 #include "VirtualSerialPort.h"
 
 VirtualSerialPort::VirtualSerialPort(boost::asio::io_context& io_context, const std::string& device)
-    : master_fd_(io_context), device_name_("/dev/" + device) {
+    : master_fd_(io_context), slave_fd_(io_context), device_name_("/dev/" + device) {
     std::lock_guard<std::mutex> lock(mutex_);
     int master_fd = posix_openpt(O_RDWR | O_NOCTTY);
     if (master_fd == -1) {
@@ -27,6 +27,18 @@ VirtualSerialPort::VirtualSerialPort(boost::asio::io_context& io_context, const 
             throw std::runtime_error("Failed to remove existing symlink");
         }
         BOOST_LOG_TRIVIAL(info) << "Existing symlink removed or not present";
+
+        BOOST_LOG_TRIVIAL(info) << "Slave PTY name: " << slave_name << std::endl;
+
+        // Open the slave pseudoterminal
+        int slave_fd;
+        slave_fd = open(slave_name, O_RDWR);
+        if (slave_fd == -1) {
+            std::cerr << "Error opening slave PTY: " << strerror(errno) << std::endl;
+            close();
+            return;
+        }
+        slave_fd_.assign(slave_fd);
 
         if (symlink(slave_name, device_name_.c_str()) != 0) {
             BOOST_LOG_TRIVIAL(error) << "Failed to create symlink for PTY slave: " << strerror(errno);
@@ -75,6 +87,7 @@ void VirtualSerialPort::setup_pty(int fd) {
 
 void VirtualSerialPort::close() {
     master_fd_.close();
+    slave_fd_.close();
     unlink(device_name_.c_str());
 }
 
