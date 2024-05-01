@@ -23,48 +23,22 @@ endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-add_library(logging src/logging.cpp)
-target_include_directories(logging PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(logging PUBLIC
-  Boost::log
-  Boost::log_setup
-  Boost::date_time
-)
-
-add_library(core_lib src/logging.cpp src/SerialServer.cpp src/SerialClient.cpp src/VirtualSerialPort.cpp)
+# Create core library without Logger.cpp, which is now in the logging library
+add_library(core_lib src/Logger.cpp src/SerialServer.cpp src/SerialClient.cpp src/VirtualSerialPort.cpp)
 target_include_directories(core_lib PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(core_lib PRIVATE
+target_link_libraries(core_lib PUBLIC
   Boost::system
   Boost::program_options
   Boost::log
   Boost::log_setup
   Boost::date_time
-  logging
   pthread
 )
 
+# Create the executable
 add_executable(ser2net2ser src/main.cpp)
 target_link_libraries(ser2net2ser PRIVATE
   core_lib
-  logging
   Boost::system
   Boost::program_options
-  Boost::log
-  Boost::log_setup
-  Boost::date_time
 )
-
-# # TODO: REENABLE TESTS
-# enable_testing()
-# add_executable(test_app tests/test_server.cpp)
-# target_compile_definitions(test_app PRIVATE UNIT_TEST)
-# target_link_libraries(test_app PRIVATE
-#   serial_server_lib  # this includes server.cpp
-#   Boost::system
-#   GTest::gtest_main
-#   GTest::gtest
-#   GTest::gmock
-# )
-
-# include(GoogleTest)
-# gtest_discover_tests(test_app EXTRA_ARGS --gtest_color=yes)

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include <boost/program_options.hpp>
-#include "logging.h"
+#include "Logger.h"
 #include "SerialClient.h"
 #include "SerialServer.h"
 #include "RealSerialPort.h"
@@ -25,8 +25,6 @@ void setup_and_run_client(io_service& io, const variables_map& vm) {
 }
 
 int main(int argc, char* argv[]) {
-    init_logging();
-
     if (argc < 2) {
         cerr << "Usage: ser2net2ser <command> [options]\n";
         return 1;

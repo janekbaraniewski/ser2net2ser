@@ -10,11 +10,11 @@ using std::endl;
 
 SerialClient::SerialClient(boost::asio::io_service& io_service, const std::string& server_ip, unsigned short server_port, const std::string& vsp_name)
     : vsp_(io_service, vsp_name) {
-    std::cout << "Initializing client...";
-    std::cout << "Connecting to server at " << server_ip << ":" << server_port;
+    Logger(Logger::Level::Info)  << "Initializing client...";
+    Logger(Logger::Level::Info)  << "Connecting to server at " << server_ip << ":" << server_port;
     socketClient_.connectToServer(server_ip.c_str(), server_port);
-    std::cout << "Connected to server.";
-    std::cout << "Opening virtual serial port: " << vsp_name;
+    Logger(Logger::Level::Info)  << "Connected to server.";
+    Logger(Logger::Level::Info)  << "Opening virtual serial port: " << vsp_name;
 }
 
 void SerialClient::run() {
@@ -36,10 +36,10 @@ void SerialClient::run() {
             ssize_t bytes_read = vsp_.async_read(buffer, sizeof(buffer) - 1);
             if (bytes_read > 0) {
                 buffer[bytes_read] = '\0';
-                std::cout << "From PTY: " << buffer;
+                Logger(Logger::Level::Info)  << "From PTY: " << buffer;
                 socketClient_.sendToServer(buffer, bytes_read);
             } else if (bytes_read == 0) {
-                std::cout << "PTY closed." << std::endl;
+                Logger(Logger::Level::Info) << "PTY closed." << std::endl;
                 break;
             } else {
                 std::cerr << "Error reading from PTY: " << strerror(errno) << std::endl;
@@ -53,7 +53,7 @@ void SerialClient::run() {
                 std::cout << "From Server: " << buffer;
                 vsp_.async_write(buffer, bytes_read);
             } else if (bytes_read == 0) {
-                std::cout << "Server closed connection." << std::endl;
+                Logger(Logger::Level::Info) << "Server closed connection." << std::endl;
                 break;
             } else {
                 std::cerr << "Error reading from socket: " << strerror(errno) << std::endl;

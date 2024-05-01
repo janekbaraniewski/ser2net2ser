@@ -2,8 +2,8 @@
 #define REALSERIALPORT_H
 
 #include "ISerialPort.h"
+#include "Logger.h"
 #include <boost/asio.hpp>
-#include <boost/log/trivial.hpp>
 
 using boost::asio::serial_port_base;
 
@@ -12,17 +12,17 @@ public:
     explicit RealSerialPort(boost::asio::io_service& io) : port(io) {}
 
     void open(const std::string& device, serial_port_base::baud_rate baudRate) override {
-        BOOST_LOG_TRIVIAL(info) << "Setting up connection to serial port " << device;
+        Logger(Logger::Level::Info) << "Setting up connection to serial port " << device;
         try {
             port.open(device);
             setSerialOptions(baudRate);
         } catch (const boost::system::system_error& e) {
-            BOOST_LOG_TRIVIAL(error) << "Failed to open serial port: " << e.what();
+            Logger(Logger::Level::Error) << "Failed to open serial port: " << e.what();
         }
     }
 
     void setSerialOptions(serial_port_base::baud_rate baudRate) {
-        BOOST_LOG_TRIVIAL(info) << "Setting connection options.";
+        Logger(Logger::Level::Info) << "Setting connection options.";
         port.set_option(baudRate);
         port.set_option(serial_port_base::character_size(8));
         port.set_option(serial_port_base::parity(serial_port_base::parity::none));
@@ -31,18 +31,17 @@ public:
     }
 
     void async_read_some(const boost::asio::mutable_buffer& buffer, std::function<void(const boost::system::error_code&, std::size_t)> handler) override {
-        // BOOST_LOG_TRIVIAL(info) << "Read some.";
         if (!port.is_open()) {
-            BOOST_LOG_TRIVIAL(error) << "Attempt to read from a closed serial port.";
+            Logger(Logger::Level::Error) << "Attempt to read from a closed serial port.";
             return;
         }
         port.async_read_some(buffer, handler);
     }
 
     void async_write(const boost::asio::const_buffer& buffer, std::function<void(const boost::system::error_code&, std::size_t)> handler) override {
-        BOOST_LOG_TRIVIAL(info) << "write some some.";
+        Logger(Logger::Level::Info) << "write some some.";
         if (!port.is_open()) {
-            BOOST_LOG_TRIVIAL(error) << "Attempt to write to a closed serial port.";
+            Logger(Logger::Level::Error) << "Attempt to write to a closed serial port.";
             return;
         }
         boost::asio::async_write(port, buffer, handler);

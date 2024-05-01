@@ -1,5 +1,4 @@
 #include "SerialServer.h"
-#include <boost/log/trivial.hpp>
 
 SerialServer::SerialServer(boost::asio::io_service& io_service, const std::string& device, unsigned int baud_rate)
     : io_service_(io_service),
@@ -10,9 +9,9 @@ SerialServer::SerialServer(boost::asio::io_service& io_service, const std::strin
     }
 
 void SerialServer::run() {
-    BOOST_LOG_TRIVIAL(info) << "SerialServer::run";
+    Logger(Logger::Level::Info) << "SerialServer::run";
     start_accept();
-    BOOST_LOG_TRIVIAL(info) << "ioservice::run";
+    Logger(Logger::Level::Info) << "ioservice::run";
     io_service_.run();
 }
 
@@ -26,14 +25,14 @@ void SerialServer::start_accept() {
 }
 
 void SerialServer::handle_session() {
-    BOOST_LOG_TRIVIAL(info) << "SerialServer::handle_session";
+    Logger(Logger::Level::Info) << "SerialServer::handle_session";
 
     async_read_socket();
     async_read_serial();
 }
 
 void SerialServer::async_read_socket() {
-    BOOST_LOG_TRIVIAL(info) << "SerialServer::async_read_socket";
+    Logger(Logger::Level::Info) << "SerialServer::async_read_socket";
 
     socket_.async_read_some(boost::asio::buffer(buffer_), [this](boost::system::error_code ec, std::size_t length) {
         if (!ec) {
@@ -41,11 +40,11 @@ void SerialServer::async_read_socket() {
                 if (!ec) {
                     async_read_socket();
                 } else {
-                    BOOST_LOG_TRIVIAL(error) << "Error writing to client: " << ec.message();
+                    Logger(Logger::Level::Error) << "Error writing to client: " << ec.message();
                 }
             });
         } else {
-            BOOST_LOG_TRIVIAL(error) << "Read error on socket: " << ec.message();
+            Logger(Logger::Level::Error) << "Read error on socket: " << ec.message();
             socket_.close();
         }
     });
@@ -61,11 +60,11 @@ void SerialServer::async_read_serial() {
                 if (!ec) {
                     async_read_serial();
                 } else {
-                    BOOST_LOG_TRIVIAL(error) << "Error sending to socket: " << ec.message();
+                    Logger(Logger::Level::Error) << "Error sending to socket: " << ec.message();
                 }
             });
         } else {
-            BOOST_LOG_TRIVIAL(error) << "Read error on serial port: " << ec.message();
+            Logger(Logger::Level::Error) << "Read error on serial port: " << ec.message();
             socket_.close();
         }
     });

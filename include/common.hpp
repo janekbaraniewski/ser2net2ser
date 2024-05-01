@@ -12,6 +12,6 @@
 #include <boost/array.hpp>
 #include <boost/program_options.hpp>
 
-#include "logging.h"
+#include "Logger.h"
 
 #endif // COMMON_HPP
