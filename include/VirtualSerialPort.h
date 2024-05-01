@@ -15,7 +15,7 @@ public:
     ssize_t async_write(const char* buffer, unsigned int length);
 
 private:
-    boost::asio::posix::stream_descriptor slave_fd_;
+    int slave_fd_raw_;
     // boost::array<char, 128> buffer_;
     // std::array<char, 1024> read_buffer_;
     std::string device_name_;

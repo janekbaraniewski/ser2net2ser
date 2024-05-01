@@ -1,9 +1,8 @@
 #include "VirtualSerialPort.h"
 
 VirtualSerialPort::VirtualSerialPort(boost::asio::io_context& io_context, const std::string& device)
-    : slave_fd_(io_context), device_name_("/dev/" + device) {
+    : device_name_("/dev/" + device) {
     std::lock_guard<std::mutex> lock(mutex_);
-    int slave_fd;
     char* slave_name;
     master_fd_raw_ = posix_openpt(O_RDWR | O_NOCTTY);
     if (master_fd_raw_ == -1) {
@@ -27,13 +26,11 @@ VirtualSerialPort::VirtualSerialPort(boost::asio::io_context& io_context, const 
     Logger(Logger::Level::Info) << "Symlink for PTY slave created successfully";
 
     // Open the slave pseudoterminal
-    slave_fd = open(slave_name, O_RDWR);
-    if (slave_fd == -1) {
+    slave_fd_raw_ = open(slave_name, O_RDWR);
+    if (slave_fd_raw_ == -1) {
         Logger(Logger::Level::Error) << "Failed to create symlink for PTY slave: " << strerror(errno);
         throw std::runtime_error("Failed to open the slave pseudoterminal");
     }
-
-
 
     chmod(device_name_.c_str(), 0660);
     struct group* tty_grp = getgrnam("tty");
@@ -43,9 +40,8 @@ VirtualSerialPort::VirtualSerialPort(boost::asio::io_context& io_context, const 
     }
     Logger(Logger::Level::Info) << "Group changed successfully for the device";
 
-    slave_fd_.assign(slave_fd);
     setup_pty(master_fd_raw_);
-    setup_pty(slave_fd);
+    setup_pty(slave_fd_raw_);
 }
 
 void VirtualSerialPort::setup_pty(int fd) {
@@ -77,7 +73,7 @@ void VirtualSerialPort::setup_pty(int fd) {
 
 VirtualSerialPort::~VirtualSerialPort() {
     close(master_fd_raw_);
-    slave_fd_.close();
+    close(slave_fd_raw_);
     unlink(device_name_.c_str());
 
 }
