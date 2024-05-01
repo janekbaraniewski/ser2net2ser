@@ -28,7 +28,7 @@ void SerialClient::run() {
         FD_SET(socketClient_.sock_fd, &read_fds);
 
         if (select(max_fd, &read_fds, NULL, NULL, NULL) < 0 && errno != EINTR) {
-            std::cerr << "Select error: " << strerror(errno) << std::endl;
+            Logger(Logger::Level::Error) << "Select error: " << strerror(errno) << std::endl;
             break;
         }
 
@@ -42,7 +42,7 @@ void SerialClient::run() {
                 Logger(Logger::Level::Info) << "PTY closed." << std::endl;
                 break;
             } else {
-                std::cerr << "Error reading from PTY: " << strerror(errno) << std::endl;
+                Logger(Logger::Level::Error) << "Error reading from PTY: " << strerror(errno) << std::endl;
             }
         }
 
@@ -50,13 +50,13 @@ void SerialClient::run() {
             ssize_t bytes_read = socketClient_.receiveFromServer(buffer, sizeof(buffer) - 1);
             if (bytes_read > 0) {
                 buffer[bytes_read] = '\0';
-                std::cout << "From Server: " << buffer;
+                Logger(Logger::Level::Info) << "From Server: " << buffer;
                 vsp_.async_write(buffer, bytes_read);
             } else if (bytes_read == 0) {
                 Logger(Logger::Level::Info) << "Server closed connection." << std::endl;
                 break;
             } else {
-                std::cerr << "Error reading from socket: " << strerror(errno) << std::endl;
+                Logger(Logger::Level::Error) << "Error reading from socket: " << strerror(errno) << std::endl;
             }
         }
     }
