@@ -115,9 +115,9 @@ void VirtualSerialPort::async_read(boost::asio::mutable_buffer buffer, std::func
     //             handler(ec, 0);
     //         }
     //     });
-    char buffer_[256];
+    // char buffer_[256];
     ssize_t bytes_read;
-    bytes_read = read(master_fd_.native_handle(), buffer.data(), sizeof(buffer_) - 1);
+    bytes_read = read(master_fd_.native_handle(), buffer.data(), sizeof(buffer) - 1);
     if (bytes_read == -1) {
         std::cerr << "Error reading from PTY: " << strerror(errno) << std::endl;
 
@@ -125,8 +125,8 @@ void VirtualSerialPort::async_read(boost::asio::mutable_buffer buffer, std::func
         handler(boost::system::error_code(1, boost::asio::error::get_system_category()), -1);
     }
 
-    buffer_[bytes_read] = '\0'; // Null-terminate string
-    BOOST_LOG_TRIVIAL(info) << "READ FROM SERIAL!!!! -> " << buffer_;
+    // buffer[bytes_read] = '\0'; // Null-terminate string
+    BOOST_LOG_TRIVIAL(info) << "READ FROM SERIAL!!!! -> " << buffer;
     handler(boost::system::error_code(), bytes_read);
 }
 
