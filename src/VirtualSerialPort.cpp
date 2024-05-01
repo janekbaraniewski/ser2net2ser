@@ -47,7 +47,6 @@ VirtualSerialPort::VirtualSerialPort(boost::asio::io_context& io_context, const 
 }
 
 void VirtualSerialPort::setup_pty(int fd) {
-    std::lock_guard<std::mutex> lock(mutex_);
     struct termios tty;
     if (tcgetattr(fd, &tty) != 0) {
         BOOST_LOG_TRIVIAL(error) << "Error from tcgetattr: " << strerror(errno);
