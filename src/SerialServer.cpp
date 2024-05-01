@@ -32,11 +32,12 @@ SerialServer::~SerialServer() {
 }
 
 void SerialServer::run() {
-    std::cout << "SerialServer::run";
+    Logger(Logger::Level::Info) << "SerialServer::run";
     start_accept();
 }
 
 void SerialServer::start_accept() {
+    Logger(Logger::Level::Info) << "SerialServer::start_accept";
     struct sockaddr_in cli_addr;
     socklen_t clilen = sizeof(cli_addr);
 
@@ -49,13 +50,13 @@ void SerialServer::start_accept() {
 }
 
 void SerialServer::handle_session(int client_sock) {
-    std::cout << "SerialServer::handle_session";
+    Logger(Logger::Level::Info) << "SerialServer::handle_session";
     async_read_socket(client_sock);
     async_read_serial(client_sock);
 }
 
 void SerialServer::async_read_socket(int client_sock) {
-    std::cout << "SerialServer::async_read_socket";
+    Logger(Logger::Level::Info) << "SerialServer::async_read_socket";
     ssize_t length = read(client_sock, buffer_.data(), buffer_.size());
 
     if (length > 0) {
@@ -67,7 +68,7 @@ void SerialServer::async_read_socket(int client_sock) {
 }
 
 void SerialServer::async_read_serial(int client_sock) {
-    std::cout << "SerialServer::async_read_serial";
+    Logger(Logger::Level::Info) << "SerialServer::async_read_serial";
     ssize_t length = serial_port_.async_read_some(buffer_.data(), buffer_.size());
 
     if (length > 0) {
