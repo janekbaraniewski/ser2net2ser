@@ -118,14 +118,14 @@ void VirtualSerialPort::async_read(boost::asio::mutable_buffer buffer, std::func
     //     });
     char buffer_[256];
     ssize_t bytes_read;
-    while ((bytes_read = read(master_fd_.native_handle(), buffer_, sizeof(buffer_) - 1)) > 0) {
-        buffer_[bytes_read] = '\0'; // Null-terminate string
-        BOOST_LOG_TRIVIAL(info) << "READ FROM SERIAL!!!! -> " << buffer_;
-    }
-
+    bytes_read = read(master_fd_.native_handle(), buffer_, sizeof(buffer_) - 1);
     if (bytes_read == -1) {
         std::cerr << "Error reading from PTY: " << strerror(errno) << std::endl;
+        return;
     }
+
+    buffer_[bytes_read] = '\0'; // Null-terminate string
+    BOOST_LOG_TRIVIAL(info) << "READ FROM SERIAL!!!! -> " << buffer_;
 }
 
 

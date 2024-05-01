@@ -16,7 +16,8 @@ public:
 private:
     boost::asio::posix::stream_descriptor master_fd_;
     boost::asio::posix::stream_descriptor slave_fd_;
-    std::array<char, 1024> read_buffer_;
+    boost::array<char, 128> buffer_;
+    // std::array<char, 1024> read_buffer_;
     std::string device_name_;
     std::mutex mutex_;
 
