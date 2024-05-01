@@ -1,7 +1,5 @@
 # ser2net2ser
 
-> WIP: server seems to work fine, client still has some issues
-
 ## Requirements
 
 - Linux or macOS operating system
