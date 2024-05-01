@@ -2,6 +2,7 @@
 #define VIRTUALSERIALPORT_H
 
 #include "common.hpp"
+#include <cstring>
 #include <grp.h>
 #include <sys/stat.h>
 
