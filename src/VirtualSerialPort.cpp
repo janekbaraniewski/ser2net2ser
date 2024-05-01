@@ -1,18 +1,18 @@
 #include "VirtualSerialPort.h"
 
 VirtualSerialPort::VirtualSerialPort(boost::asio::io_context& io_context, const std::string& device)
-    : master_fd_(io_context), slave_fd_(io_context), device_name_("/dev/" + device) {
+    : slave_fd_(io_context), device_name_("/dev/" + device) {
     std::lock_guard<std::mutex> lock(mutex_);
-    int master_fd, slave_fd;
+    int slave_fd;
     char* slave_name;
-    master_fd = posix_openpt(O_RDWR | O_NOCTTY);
-    if (master_fd == -1) {
+    master_fd_raw_ = posix_openpt(O_RDWR | O_NOCTTY);
+    if (master_fd_raw_ == -1) {
         Logger(Logger::Level::Error) << "Failed to open PTY master: " << strerror(errno);
         throw std::runtime_error("Failed to open PTY master");
     }
     Logger(Logger::Level::Info) << "PTY master opened successfully";
 
-    if (grantpt(master_fd) == -1 || unlockpt(master_fd) == -1 || (slave_name = ptsname(master_fd)) == nullptr) {
+    if (grantpt(master_fd_raw_) == -1 || unlockpt(master_fd_raw_) == -1 || (slave_name = ptsname(master_fd_raw_)) == nullptr) {
             Logger(Logger::Level::Error) << "Failed to grant or unlock PTY: " << strerror(errno);
             throw std::runtime_error("Failed to grant or unlock PTY");
     }
@@ -43,9 +43,8 @@ VirtualSerialPort::VirtualSerialPort(boost::asio::io_context& io_context, const 
     }
     Logger(Logger::Level::Info) << "Group changed successfully for the device";
 
-    master_fd_.assign(master_fd);
     slave_fd_.assign(slave_fd);
-    setup_pty(master_fd);
+    setup_pty(master_fd_raw_);
     setup_pty(slave_fd);
 }
 
@@ -76,25 +75,22 @@ void VirtualSerialPort::setup_pty(int fd) {
     }
 }
 
-void VirtualSerialPort::close() {
-    master_fd_.close();
+VirtualSerialPort::~VirtualSerialPort() {
+    close(master_fd_raw_);
     slave_fd_.close();
     unlink(device_name_.c_str());
-}
 
-VirtualSerialPort::~VirtualSerialPort() {
-    close();
 }
 
 ssize_t VirtualSerialPort::async_read(char* buffer, unsigned int length) {
     Logger(Logger::Level::Info) << "VSP::async_read";
-    ssize_t bytes_read = read(master_fd_.native_handle(), buffer, length);
+    ssize_t bytes_read = read(master_fd_raw_, buffer, length);
     Logger(Logger::Level::Info) << "READ FROM SERIAL!!!! -> ";
     return bytes_read;
 }
 
 
 ssize_t VirtualSerialPort::async_write(const char* buffer, unsigned int length) {
-    return write(master_fd_.native_handle(), buffer, length);
+    return write(master_fd_raw_, buffer, length);
 }
 

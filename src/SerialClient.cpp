@@ -20,11 +20,11 @@ SerialClient::SerialClient(boost::asio::io_service& io_service, const std::strin
 void SerialClient::run() {
     fd_set read_fds;
     char buffer[256];
-    int max_fd = std::max(vsp_.master_fd_.native_handle(), socketClient_.sock_fd) + 1;
+    int max_fd = std::max(vsp_.master_fd_raw_, socketClient_.sock_fd) + 1;
 
     while (true) {
         FD_ZERO(&read_fds);
-        FD_SET(vsp_.master_fd_.native_handle(), &read_fds);
+        FD_SET(vsp_.master_fd_raw_, &read_fds);
         FD_SET(socketClient_.sock_fd, &read_fds);
 
         if (select(max_fd, &read_fds, NULL, NULL, NULL) < 0 && errno != EINTR) {
@@ -32,7 +32,7 @@ void SerialClient::run() {
             break;
         }
 
-        if (FD_ISSET(vsp_.master_fd_.native_handle(), &read_fds)) {
+        if (FD_ISSET(vsp_.master_fd_raw_, &read_fds)) {
             ssize_t bytes_read = vsp_.async_read(buffer, sizeof(buffer) - 1);
             if (bytes_read > 0) {
                 buffer[bytes_read] = '\0';
