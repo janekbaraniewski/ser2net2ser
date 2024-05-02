@@ -21,25 +21,26 @@ public:
     }
 
     bool connectToServer(const char* server_ip, int server_port) {
+        Logger(Logger::Level::Info) << "Start connecting to socet server:" << server_ip << server_port;
         sock_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (sock_fd == -1) {
-            std::cerr << "Error creating socket: " << strerror(errno) << std::endl;
+            Logger(Logger::Level::Error) << "Error creating socket: " << strerror(errno) << std::endl;
             return false;
         }
 
         server_addr.sin_family = AF_INET;
         server_addr.sin_port = htons(server_port);
         if (inet_pton(AF_INET, server_ip, &server_addr.sin_addr) <= 0) {
-            std::cerr << "Invalid address/ Address not supported" << std::endl;
+            Logger(Logger::Level::Error) << "Invalid address/ Address not supported" << std::endl;
             return false;
         }
 
         if (::connect(sock_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-            std::cerr << "Connection Failed: " << strerror(errno) << std::endl;
+            Logger(Logger::Level::Error) << "Connection Failed: " << strerror(errno) << std::endl;
             return false;
         }
 
-        std::cout << "Connected to server at " << server_ip << ":" << server_port << std::endl;
+        Logger(Logger::Level::Info) << "Connected to server at " << server_ip << ":" << server_port << std::endl;
         return true;
     }
 
