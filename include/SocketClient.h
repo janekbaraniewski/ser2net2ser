@@ -35,8 +35,9 @@ public:
             return false;
         }
 
-        if (::connect(sock_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        if (connect(sock_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
             Logger(Logger::Level::Error) << "Connection Failed: " << strerror(errno) << std::endl;
+            exit(1);
             return false;
         }
 
