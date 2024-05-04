@@ -1,5 +1,12 @@
 # ser2net2ser
 
+# Table of Contents
+[[_TOC_]]
+
+## Motivation
+
+I've been using `socat` + `ser2net` for sharing serial devices over network for some time, mostly in my other project -> [kubeserial].
+
 ## Requirements
 
 - Linux or macOS operating system
@@ -63,3 +70,7 @@ Dockerfiles for both the server and client are included. Build and run the conta
 ```bash
 make build-images
 ```
+
+<!-- Links -->
+
+[kubeserial]: https://github.com/janekbaraniewski/kubeserial "KubeSerial"
