@@ -1,11 +1,17 @@
 # ser2net2ser
 
-# Table of Contents
-[[_TOC_]]
+## Table of Contents
+
+1. [Motivation](#motivation)
+2. [Requirements](#requirements)
+3. [Building the project](#building-the-project)
+4. [Running the server](#running-the-server)
+5. [Running the client](#running-the-client)
+
 
 ## Motivation
 
-I've been using `socat` + `ser2net` for sharing serial devices over network for some time, mostly in my other project -> [kubeserial].
+I've been using `socat` + `ser2net` for sharing serial devices over network for some time, mainly in my other project -> [kubeserial]. I've run into few limitations so I created this project to recreate the behaviour of `socat` + `ser2net` and then solve connection issues I've been having.
 
 ## Requirements
 
