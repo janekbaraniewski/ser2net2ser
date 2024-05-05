@@ -1,7 +1,4 @@
 #include "Logger.h"
-#include <iostream>
-#include <chrono>
-#include <iomanip>
 
 std::mutex Logger::mtx;
 

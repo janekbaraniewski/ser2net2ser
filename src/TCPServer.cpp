@@ -1,7 +1,4 @@
 #include "TCPServer.h"
-#include <thread>
-#include <cstring>
-#include <iostream>
 
 TcpServer::TcpServer(int port, SerialPort& serial) : port_(port), serial_(serial), is_running_(false) {
     Logger(Logger::Level::Info) << "TCPServer init start, creating server on port " << port_;

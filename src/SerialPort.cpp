@@ -1,9 +1,4 @@
 #include "SerialPort.h"
-#include <fcntl.h>
-#include <unistd.h>
-#include <termios.h>
-#include <cstring>
-#include <stdexcept>
 
 SerialPort::SerialPort(const std::string& device, int baud_rate) {
     Logger(Logger::Level::Info) << "Initializing serial port connection to " << device << " baudRate " << baud_rate << std::endl;

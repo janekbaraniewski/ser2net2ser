@@ -1,6 +1,11 @@
 #ifndef SERIALPORT_H
 #define SERIALPORT_H
 
+#include <fcntl.h>
+#include <unistd.h>
+#include <termios.h>
+#include <cstring>
+#include <stdexcept>
 #include <thread>
 #include <atomic>
 #include <queue>

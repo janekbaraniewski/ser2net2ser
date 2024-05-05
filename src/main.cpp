@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <stdexcept>
+
 #include "Logger.h"
 #include "SerialClient.h"
 #include "SerialPort.h"
