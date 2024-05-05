@@ -4,6 +4,7 @@
 #include <iostream>
 
 TcpServer::TcpServer(int port, SerialPort& serial) : port_(port), serial_(serial), is_running_(false) {
+    Logger(Logger::Level::Info) << "TCPServer init start";
     if ((server_fd_ = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         throw std::runtime_error("Socket creation failed");
     }
@@ -24,6 +25,7 @@ TcpServer::TcpServer(int port, SerialPort& serial) : port_(port), serial_(serial
     if (listen(server_fd_, 3) < 0) {
         throw std::runtime_error("Listen failed");
     }
+    Logger(Logger::Level::Info) << "TCPServer init finish";
 }
 
 TcpServer::~TcpServer() {
@@ -34,6 +36,7 @@ TcpServer::~TcpServer() {
 
 void TcpServer::run() {
     is_running_ = true;
+    Logger(Logger::Level::Info) << "TCPServer start listening";
     while (is_running_) {
         struct sockaddr_in clientAddr;
         socklen_t clientLen = sizeof(clientAddr);
@@ -54,15 +57,21 @@ void TcpServer::stop() {
 
 void TcpServer::handleClient(int client_socket) {
     char buffer[1024];
+    Logger(Logger::Level::Info) << "HandleClient start";
     while (true) {
         memset(buffer, 0, sizeof(buffer));
         ssize_t bytesReceived = read(client_socket, buffer, sizeof(buffer));
         if (bytesReceived <= 0) {
+            Logger(Logger::Level::Error) << "HandleClient - failed reading from client";
             break;
         }
 
+        Logger(Logger::Level::Info) << "HandleClient - read data from client " << buffer;
+
+        Logger(Logger::Level::Info) << "HandleClient - writing data to serial port";
         serial_.writeData(std::string(buffer, bytesReceived));
         std::string response = serial_.readData();
+        Logger(Logger::Level::Info) << "HandleClient - got response from serial port " << response;
         write(client_socket, response.c_str(), response.size());
     }
 
