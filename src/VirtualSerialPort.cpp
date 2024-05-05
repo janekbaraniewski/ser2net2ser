@@ -16,7 +16,7 @@ VirtualSerialPort::VirtualSerialPort(const std::string& device)
             throw std::runtime_error("Failed to grant or unlock PTY");
     }
     Logger(Logger::Level::Info) << "PTY grant and unlock successful";
-    Logger(Logger::Level::Info) << "Slave PTY name: " << slave_name << std::endl;
+    Logger(Logger::Level::Info) << "Slave PTY name: " << slave_name;
 
     // Attempt to create a symbolic link from slave_name to "/dev/ttyUSB0"
     if (symlink(slave_name, device_name_.c_str()) == -1) {
