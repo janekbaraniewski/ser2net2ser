@@ -31,22 +31,6 @@ jobs:
       with:
         python-version: '3.x'
 
-    # - name: Install dependencies (Ubuntu)
-    #   if: startsWith(matrix.config.os, 'ubuntu')
-    #   run: |
-    #     sudo apt-get update
-    #     sudo apt-get install -y libboost-all-dev
-
-    # - name: Install dependencies (macOS)
-    #   if: startsWith(matrix.config.os, 'macos')
-    #   run: |
-    #     brew install boost
-
-    - name: Install dependencies (Windows)
-      if: startsWith(matrix.config.os, 'windows')
-      run: |
-        choco install boost-msvc-14.2
-
     - name: Set up CMake (All platforms)
       uses: lukka/get-cmake@latest
 
@@ -85,27 +69,15 @@ jobs:
     - name: List all files in artifacts directory
       run: ls -R artifacts
 
-    # - name: Create Release
-    #   id: create_release
-    #   uses: actions/create-release@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     tag_name: ${{ github.ref }}
-    #     release_name: Release ${{ github.ref_name }}
-    #     draft: false
-    #     prerelease: false
-
-    - name: debug
+    - name: Debug file locations
       run: |
-        pwd
-        ls -la artifacts/
+        find artifacts/ -type f
 
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: artifacts/ser2net2ser*
+        file: artifacts/*/*  # Changed this line to include subdirectories
         tag: ${{ github.ref }}
         release_name: Release ${{ github.ref_name }}
         overwrite: true
