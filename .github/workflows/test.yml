@@ -12,11 +12,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Setup CMake
-      uses: actions/setup-cmake@v1
+    - name: Set up CMake (All platforms)
+      uses: lukka/get-cmake@latest
 
-    - name: Setup Clang
-      uses: actions/setup-clang@v1
+    - name: Set up Clang
+      uses: egor-tensin/setup-clang@v1
+      with:
+        version: latest
 
     - name: Install dependencies
       run: sudo apt-get install -y cppcheck clang-format
