@@ -7,6 +7,7 @@
 #include "TCPServer.h"
 
 TcpServer::TcpServer(int port, SerialPort& serial) : port_(port), is_running_(false), serial_(serial) {
+    Logger(Logger::Level::Info) << "Init tcp server";
     if ((server_fd_ = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         throw std::runtime_error("Socket creation failed");
     }
@@ -27,6 +28,7 @@ TcpServer::TcpServer(int port, SerialPort& serial) : port_(port), is_running_(fa
     if (listen(server_fd_, 3) < 0) {
         throw std::runtime_error("Listen failed");
     }
+    Logger(Logger::Level::Info) << "Init tcp server finished";
 }
 
 TcpServer::~TcpServer() {
@@ -36,6 +38,7 @@ TcpServer::~TcpServer() {
 }
 
 void TcpServer::run() {
+    Logger(Logger::Level::Info) << "Start tcp server";
     is_running_ = true;
     while (is_running_) {
         int addrlen = sizeof(address_);
@@ -59,8 +62,10 @@ void TcpServer::handleClient(int client_socket, SerialPort& serial) {
 
     while (true) {
         memset(buffer, 0, bufferSize);
+        Logger(Logger::Level::Info) << "Reading client connection";
         int read_size = read(client_socket, buffer, bufferSize - 1);
         if (read_size <= 0) {
+            Logger(Logger::Level::Info) << "Client disconnected or error";
             break; // Client disconnected or error
         }
 

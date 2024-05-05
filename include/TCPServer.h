@@ -1,6 +1,7 @@
 #ifndef TCPSERVER_H
 #define TCPSERVER_H
 
+#include "Logger.h"
 #include "SerialPort.h"
 #include <netinet/in.h>
 
