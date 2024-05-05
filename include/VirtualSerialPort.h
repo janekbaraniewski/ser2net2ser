@@ -2,23 +2,22 @@
 #define VIRTUALSERIALPORT_H
 
 #include "common.hpp"
+#include <cstring>
 #include <grp.h>
+#include <sys/stat.h>
 
 class VirtualSerialPort {
 public:
-    boost::asio::posix::stream_descriptor master_fd_;
+    int master_fd_raw_;
 
-    VirtualSerialPort(boost::asio::io_context& io_context, const std::string& device);
+    VirtualSerialPort(const std::string& device);
     ~VirtualSerialPort();
 
     ssize_t async_read(char* buffer, unsigned int length);
     ssize_t async_write(const char* buffer, unsigned int length);
-    void close();
 
 private:
-    boost::asio::posix::stream_descriptor slave_fd_;
-    // boost::array<char, 128> buffer_;
-    // std::array<char, 1024> read_buffer_;
+    int slave_fd_raw_;
     std::string device_name_;
     std::mutex mutex_;
 

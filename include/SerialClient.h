@@ -5,8 +5,6 @@
 #include "VirtualSerialPort.h"
 #include "SocketClient.h"
 
-using namespace boost::asio;
-using ip::tcp;
 using std::string;
 
 class SerialClient {
@@ -15,7 +13,7 @@ private:
     VirtualSerialPort vsp_;
 
 public:
-    SerialClient(boost::asio::io_service& io_service, const std::string& server_ip, unsigned short server_port, const std::string& vsp_name);
+    SerialClient(const std::string& server_ip, unsigned short server_port, const std::string& vsp_name);
     SocketClient socketClient_;
     void run();
 };

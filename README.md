@@ -1,11 +1,12 @@
 # ser2net2ser
 
-> WIP: server seems to work fine, client still has some issues
+## Motivation
+
+I've been using `socat` + `ser2net` for sharing serial devices over network for some time, mainly in my other project -> [kubeserial]. I've run into few limitations so I created this project to recreate the behaviour of `socat` + `ser2net` and then solve connection issues I've been having.
 
 ## Requirements
 
 - Linux or macOS operating system
-- Boost libraries (system, program_options, log_setup, log, date_time)
 - CMake for building the project
 - Docker (optional) for containerization
 
@@ -66,3 +67,7 @@ Dockerfiles for both the server and client are included. Build and run the conta
 ```bash
 make build-images
 ```
+
+<!-- Links -->
+
+[kubeserial]: https://github.com/janekbaraniewski/kubeserial "KubeSerial"
