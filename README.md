@@ -39,7 +39,7 @@ ser2net2ser serve \
 --port: TCP port on which the server will listen for incoming connections.
 ```
 
-![serve](docs/serve.png)
+![serve](docs/serve01.png)
 
 ## Running the Client
 
@@ -58,7 +58,7 @@ ser2net2ser connect \
 --vsp: Name of the virtual serial port to be created.
 ```
 
-![connect](docs/connect.png)
+![connect](docs/connect01.png)
 
 ## Docker Containers
 
