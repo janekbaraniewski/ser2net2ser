@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 SerialPort::SerialPort(const std::string& device, int baud_rate) {
-    Logger(Logger::Level::Info) << "SerialPort init start - device " << device << " - baudRate - " << baud_rate << std::endl;
+    Logger(Logger::Level::Info) << "Initializing serial port connection to " << device << " baudRate " << baud_rate << std::endl;
     serial_fd = open(device.c_str(), O_RDWR | O_NOCTTY);
     if (serial_fd < 0) {
         Logger(Logger::Level::Error) << "Error opening serial port: " << strerror(errno) << std::endl;
@@ -55,19 +55,19 @@ void SerialPort::configurePort(int baud_rate) {
 }
 
 void SerialPort::writeData(const std::string& data) {
-    Logger(Logger::Level::Info) << "SerialPort write data - " << data;
+    Logger(Logger::Level::Info) << "SerialPort - write: " << data;
     write(serial_fd, data.c_str(), data.size());
 }
 
 
 void SerialPort::readLoop() {
-    Logger(Logger::Level::Info) << "SerialPort start reading loop";
+    Logger(Logger::Level::Info) << "SerialPort - start reading loop.";
     while (keep_reading) {
         char buf[1024];
         int n = read(serial_fd, buf, sizeof(buf) - 1);
         if (n > 0) {
             buf[n] = '\0';  // Ensure null-termination
-            Logger(Logger::Level::Info) << "SerialPort read - " << buf;
+            Logger(Logger::Level::Info) << "SerialPort - read:" << buf;
             std::lock_guard<std::mutex> lock(mtx);
             read_buffer.push(std::string(buf));
             cv.notify_one();
@@ -87,11 +87,9 @@ void SerialPort::stopReading() {
 }
 
 std::string SerialPort::readData() {
-    Logger(Logger::Level::Info) << "SerialPort read data";
     std::unique_lock<std::mutex> lock(mtx);
     cv.wait(lock, [this]{ return !read_buffer.empty(); });
     std::string data = read_buffer.front();
     read_buffer.pop();
-    Logger(Logger::Level::Info) << "SerialPort read data - got data - " << data;
     return data;
 }
