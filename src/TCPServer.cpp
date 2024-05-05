@@ -41,14 +41,18 @@ void TcpServer::run() {
     Logger(Logger::Level::Info) << "Start tcp server";
     is_running_ = true;
     while (is_running_) {
-        int addrlen = sizeof(address_);
-        int new_socket = accept(server_fd_, (struct sockaddr *)&address_, (socklen_t*)&addrlen);
-        if (new_socket < 0) {
-            throw std::runtime_error("Accept failed");
+        struct sockaddr_in clientAddr;
+        socklen_t clientLen = sizeof(clientAddr);
+        int clientSocket = accept(server_fd_, (struct sockaddr *) &clientAddr, &clientLen);
+        if (clientSocket < 0) {
+            Logger(Logger::Level::Info) << "Cannot accept connection";
+            continue;
         }
-        std::thread clientThread(handleClient, new_socket, std::ref(serial_));
-        clientThread.detach();
+
+        std::thread clientThread(handleClient, clientSocket);
+        clientThread.detach(); // Detach the thread to handle multiple clients
     }
+
 }
 
 void TcpServer::stop() {
@@ -57,19 +61,17 @@ void TcpServer::stop() {
 }
 
 void TcpServer::handleClient(int client_socket, SerialPort& serial) {
-    const int bufferSize = 1024;
-    char buffer[bufferSize];
-
+    char buffer[1024];
     while (true) {
-        memset(buffer, 0, bufferSize);
-        Logger(Logger::Level::Info) << "Reading client connection";
-        int read_size = read(client_socket, buffer, bufferSize - 1);
-        if (read_size <= 0) {
+        memset(buffer, 0, sizeof(buffer));
+        Logger(Logger::Level::Info) << "Reading from client connection";
+        ssize_t bytesReceived = read(client_socket, buffer, sizeof(buffer));
+        if (bytesReceived <= 0) {
             Logger(Logger::Level::Info) << "Client disconnected or error";
-            break; // Client disconnected or error
+            break;
         }
 
-        serial.writeData(std::string(buffer, read_size));
+        serial.writeData(std::string(buffer, bytesReceived));
         std::string response = serial.readData();
         write(client_socket, response.c_str(), response.size());
     }
