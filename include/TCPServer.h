@@ -1,25 +1,29 @@
 #ifndef TCPSERVER_H
 #define TCPSERVER_H
 
-#include "Logger.h"
-#include "SerialPort.h"
+#include <sys/socket.h>
 #include <netinet/in.h>
+#include <unistd.h>
+#include <string>
+#include "SerialPort.h"
+#include "Logger.h"
 
 class TcpServer {
-private:
-    int server_fd_;
-    struct sockaddr_in address_;
-    int port_;
-    bool is_running_;
-    SerialPort& serial_;
-
-    static void handleClient(int client_socket, SerialPort& serial);
-
 public:
     TcpServer(int port, SerialPort& serial);
     ~TcpServer();
+
     void run();
     void stop();
+
+private:
+    void handleClient(int client_socket);
+
+    int server_fd_;
+    int port_;
+    bool is_running_;
+    struct sockaddr_in address_;
+    SerialPort& serial_;
 };
 
 #endif // TCPSERVER_H

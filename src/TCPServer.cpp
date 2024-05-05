@@ -1,13 +1,9 @@
-#include <sys/socket.h>
-#include <unistd.h>
+#include "TCPServer.h"
 #include <thread>
 #include <cstring>
-#include <stdexcept>
+#include <iostream>
 
-#include "TCPServer.h"
-
-TcpServer::TcpServer(int port, SerialPort& serial) : port_(port), is_running_(false), serial_(serial) {
-    Logger(Logger::Level::Info) << "Init tcp server on port " << port_;
+TcpServer::TcpServer(int port, SerialPort& serial) : port_(port), serial_(serial), is_running_(false) {
     if ((server_fd_ = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         throw std::runtime_error("Socket creation failed");
     }
@@ -28,7 +24,6 @@ TcpServer::TcpServer(int port, SerialPort& serial) : port_(port), is_running_(fa
     if (listen(server_fd_, 3) < 0) {
         throw std::runtime_error("Listen failed");
     }
-    Logger(Logger::Level::Info) << "Init tcp server finished";
 }
 
 TcpServer::~TcpServer() {
@@ -38,21 +33,18 @@ TcpServer::~TcpServer() {
 }
 
 void TcpServer::run() {
-    Logger(Logger::Level::Info) << "Start tcp server";
     is_running_ = true;
     while (is_running_) {
         struct sockaddr_in clientAddr;
         socklen_t clientLen = sizeof(clientAddr);
-        int clientSocket = accept(server_fd_, (struct sockaddr *) &clientAddr, &clientLen);
+        int clientSocket = accept(server_fd_, (struct sockaddr *)&clientAddr, &clientLen);
         if (clientSocket < 0) {
-            Logger(Logger::Level::Info) << "Cannot accept connection";
             continue;
         }
 
-        std::thread clientThread(handleClient, clientSocket);
+        std::thread clientThread(&TcpServer::handleClient, this, clientSocket);
         clientThread.detach(); // Detach the thread to handle multiple clients
     }
-
 }
 
 void TcpServer::stop() {
@@ -60,19 +52,17 @@ void TcpServer::stop() {
     is_running_ = false;
 }
 
-void TcpServer::handleClient(int client_socket, SerialPort& serial) {
+void TcpServer::handleClient(int client_socket) {
     char buffer[1024];
     while (true) {
         memset(buffer, 0, sizeof(buffer));
-        Logger(Logger::Level::Info) << "Reading from client connection";
         ssize_t bytesReceived = read(client_socket, buffer, sizeof(buffer));
         if (bytesReceived <= 0) {
-            Logger(Logger::Level::Info) << "Client disconnected or error";
             break;
         }
 
-        serial.writeData(std::string(buffer, bytesReceived));
-        std::string response = serial.readData();
+        serial_.writeData(std::string(buffer, bytesReceived));
+        std::string response = serial_.readData();
         write(client_socket, response.c_str(), response.size());
     }
 
