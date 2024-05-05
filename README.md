@@ -2,7 +2,7 @@
 
 ## Motivation
 
-I've been using `socat` + `ser2net` for sharing serial devices over network for some time, mainly in my other project -> [kubeserial]. I've run into few limitations so I created this project to recreate the behaviour of `socat` + `ser2net` and then solve connection issues I've been having.
+I've been using `socat` + `ser2net` for sharing serial devices over network for some time, mainly in my other project [kubeserial]. I've run into few limitations so I created this project to recreate the behaviour of `socat` + `ser2net` and then solve connection issues I've been having.
 
 ## Requirements
 
