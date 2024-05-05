@@ -47,8 +47,35 @@ void SerialPort::writeData(const std::string& data) {
     write(serial_fd, data.c_str(), data.size());
 }
 
+
+void SerialPort::readLoop() {
+    while (keep_reading) {
+        char buf[256];
+        int n = read(serial_fd, buf, sizeof(buf) - 1);
+        if (n > 0) {
+            buf[n] = '\0';  // Ensure null-termination
+            std::lock_guard<std::mutex> lock(mtx);
+            read_buffer.push(std::string(buf));
+            cv.notify_one();
+        }
+    }
+}
+
+void SerialPort::startReading() {
+    keep_reading = true;
+    read_thread = std::thread(&SerialPort::readLoop, this);
+}
+
+void SerialPort::stopReading() {
+    keep_reading = false;
+    if (read_thread.joinable())
+        read_thread.join();
+}
+
 std::string SerialPort::readData() {
-    char buf[256];
-    int n = read(serial_fd, buf, sizeof(buf));
-    return std::string(buf, n);
+    std::unique_lock<std::mutex> lock(mtx);
+    cv.wait(lock, [this]{ return !read_buffer.empty(); });
+    std::string data = read_buffer.front();
+    read_buffer.pop();
+    return data;
 }

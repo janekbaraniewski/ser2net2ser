@@ -57,23 +57,29 @@ void TcpServer::stop() {
 
 void TcpServer::handleClient(int client_socket) {
     char buffer[1024];
-    Logger(Logger::Level::Info) << "HandleClient start";
+    Logger(Logger::Level::Info) << "HandleClient start - read thread from serial";
+    std::thread readThread([&]() {
+        while (true) {
+            std::string response = serial_.readData(); // This will block until data is available
+            if (!response.empty()) {
+                Logger(Logger::Level::Info) << "HandleClient start - write to client " << response.c_str();
+                write(client_socket, response.c_str(), response.size());
+            }
+        }
+    });
+
+    Logger(Logger::Level::Info) << "HandleClient start - read data from client";
     while (true) {
         memset(buffer, 0, sizeof(buffer));
         ssize_t bytesReceived = read(client_socket, buffer, sizeof(buffer));
         if (bytesReceived <= 0) {
-            Logger(Logger::Level::Error) << "HandleClient - failed reading from client";
             break;
         }
-
-        Logger(Logger::Level::Info) << "HandleClient - read data from client " << buffer;
-
-        Logger(Logger::Level::Info) << "HandleClient - writing data to serial port";
+        Logger(Logger::Level::Info) << "HandleClient start - write to serial " << buffer;
         serial_.writeData(std::string(buffer, bytesReceived));
-        std::string response = serial_.readData();
-        Logger(Logger::Level::Info) << "HandleClient - got response from serial port " << response;
-        write(client_socket, response.c_str(), response.size());
     }
 
+    serial_.stopReading();
+    readThread.join();
     close(client_socket);
 }
