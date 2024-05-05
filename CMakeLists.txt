@@ -23,7 +23,6 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # Create core library without Logger.cpp, which is now in the logging library
 add_library(core_lib
   src/Logger.cpp
-  src/SerialServer.cpp
   src/SerialClient.cpp
   src/VirtualSerialPort.cpp
   src/SerialPort.cpp

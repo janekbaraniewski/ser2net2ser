@@ -1,10 +1,7 @@
 #include "TCPServer.h"
-#include <thread>
-#include <cstring>
-#include <iostream>
 
 TcpServer::TcpServer(int port, SerialPort& serial) : port_(port), serial_(serial), is_running_(false) {
-    Logger(Logger::Level::Info) << "TCPServer init start";
+    Logger(Logger::Level::Info) << "TCPServer init start, creating server on port " << port_;
     if ((server_fd_ = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         throw std::runtime_error("Socket creation failed");
     }
@@ -46,7 +43,7 @@ void TcpServer::run() {
         }
 
         std::thread clientThread(&TcpServer::handleClient, this, clientSocket);
-        clientThread.detach(); // Detach the thread to handle multiple clients
+        clientThread.detach();
     }
 }
 
@@ -57,26 +54,26 @@ void TcpServer::stop() {
 
 void TcpServer::handleClient(int client_socket) {
     char buffer[1024];
-    Logger(Logger::Level::Info) << "HandleClient start - read thread from serial";
+    Logger(Logger::Level::Info) << "HandleClient - start serial reading thread.";
     serial_.startReading();
     std::thread readThread([&]() {
         while (true) {
-            std::string response = serial_.readData(); // This will block until data is available
+            std::string response = serial_.readData();
+            Logger(Logger::Level::Info) << "HandleClient - write: " << response;
             if (!response.empty()) {
-                Logger(Logger::Level::Info) << "HandleClient start - write to client " << response.c_str();
                 write(client_socket, response.c_str(), response.size());
             }
         }
     });
 
-    Logger(Logger::Level::Info) << "HandleClient start - read data from client";
+    Logger(Logger::Level::Info) << "HandleClient - start read data from client";
     while (true) {
         memset(buffer, 0, sizeof(buffer));
         ssize_t bytesReceived = read(client_socket, buffer, sizeof(buffer));
         if (bytesReceived <= 0) {
             break;
         }
-        Logger(Logger::Level::Info) << "HandleClient start - write to serial " << buffer;
+        Logger(Logger::Level::Info) << "HandleClient - read: " << buffer;
         serial_.writeData(std::string(buffer, bytesReceived));
     }
 

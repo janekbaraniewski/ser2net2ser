@@ -7,7 +7,44 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  statick-checks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up CMake (All platforms)
+      uses: lukka/get-cmake@latest
+
+    - name: Set up Clang
+      uses: egor-tensin/setup-clang@v1
+      with:
+        version: latest
+
+    - name: Install dependencies
+      run: sudo apt-get install -y cppcheck clang-format
+
+    - name: Run Cppcheck
+      run: cppcheck --enable=all --std=c++17 --language=c++ --error-exitcode=1 --output-file=cppcheck_report.txt ./src
+      continue-on-error: true
+
+    - name: Check code format (Clang-Format)
+      run: clang-format -i -style=file $(find . -name '*.cpp' -or -name '*.h')
+
+    - name: Upload Cppcheck Results
+      uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: cppcheck-results
+        path: cppcheck_report.txt
+
+    - name: Upload Clang-Format Results
+      uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: format-results
+        path: $(find . -name '*.cpp' -or -name '*.h')
+
+  tests:
     runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
@@ -28,22 +65,6 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.x'
-
-    # - name: Install dependencies (Ubuntu)
-    #   if: startsWith(matrix.config.os, 'ubuntu')
-    #   run: |
-    #     sudo apt-get update
-    #     sudo apt-get install -y libboost-all-dev
-
-    # - name: Install dependencies (macOS)
-    #   if: startsWith(matrix.config.os, 'macos')
-    #   run: |
-    #     brew install boost
-
-    # - name: Install dependencies (Windows)
-    #   if: startsWith(matrix.config.os, 'windows')
-    #   run: |
-    #     choco install boost-msvc-14.2
 
     - name: Set up CMake (All platforms)
       uses: lukka/get-cmake@latest

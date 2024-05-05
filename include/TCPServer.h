@@ -5,6 +5,10 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <string>
+#include <thread>
+#include <cstring>
+#include <iostream>
+
 #include "SerialPort.h"
 #include "Logger.h"
 

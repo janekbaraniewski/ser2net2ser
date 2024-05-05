@@ -1,18 +1,22 @@
 #include <iostream>
 #include <string>
 #include <stdexcept>
+
 #include "Logger.h"
 #include "SerialClient.h"
-#include "SerialServer.h"
+#include "SerialPort.h"
+#include "TCPServer.h"
 
 using std::string;
-using std::cout;
-using std::cerr;
-using std::endl;
 
 void setup_and_run_server(const string& device, unsigned int baud_rate, unsigned int port) {
-    SerialServer server(device, baud_rate, port);
-    server.run();
+    SerialPort serialDevice(device, baud_rate);
+    TcpServer server(port, serialDevice);
+    try {
+        server.run();
+    } catch (const std::exception& e) {
+        Logger(Logger::Level::Error) << "Error: " << e.what();
+    }
 }
 
 void setup_and_run_client(const string& server_ip, unsigned short port, const string& vsp) {
@@ -22,7 +26,7 @@ void setup_and_run_client(const string& server_ip, unsigned short port, const st
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        cerr << "Usage: ser2net2ser <command> [options]\n";
+        Logger(Logger::Level::Error)  << "Usage: ser2net2ser <command> [options]\n";
         return 1;
     }
 
@@ -43,7 +47,7 @@ int main(int argc, char* argv[]) {
                 } else if (arg == "--port" || arg == "-p") {
                     if (i + 1 < argc) port = std::stoi(argv[i + 1]);
                 } else if (arg == "--help" || arg == "-h") {
-                    cout << "Usage: ser2net2ser serve [--device <dev>] [--baud <rate>] [--port <port>]\n";
+                    Logger(Logger::Level::Info)  << "Usage: ser2net2ser serve [--device <dev>] [--baud <rate>] [--port <port>]\n";
                     return 0;
                 }
             }
@@ -63,13 +67,13 @@ int main(int argc, char* argv[]) {
                 } else if (arg == "--vsp" || arg == "-v") {
                     if (i + 1 < argc) vsp = argv[i + 1];
                 } else if (arg == "--help" || arg == "-h") {
-                    cout << "Usage: ser2net2ser connect [--server <ip>] [--port <port>] --vsp <name>\n";
+                    Logger(Logger::Level::Info)  << "Usage: ser2net2ser connect [--server <ip>] [--port <port>] --vsp <name>\n";
                     return 0;
                 }
             }
 
             if (vsp.empty()) {
-                cerr << "Virtual serial port name must be specified with --vsp.\n";
+                Logger(Logger::Level::Error)  << "Virtual serial port name must be specified with --vsp.\n";
                 return 1;
             }
 
@@ -78,7 +82,7 @@ int main(int argc, char* argv[]) {
             throw std::invalid_argument("Invalid command provided. Use 'serve' or 'connect'.");
         }
     } catch (const std::exception& e) {
-        cerr << "Error: " << e.what() << endl;
+        Logger(Logger::Level::Error)  << "Error: " << e.what();
         return 1;
     }
 
