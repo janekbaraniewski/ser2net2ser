@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 SerialPort::SerialPort(const std::string& device, int baud_rate) {
-    Logger(Logger::Level::Info) << "SerialPort init start";
+    Logger(Logger::Level::Info) << "SerialPort init start - device " << device << " - baudRate - " << baud_rate;
     serial_fd = open(device.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
     if (serial_fd < 0) {
         throw std::runtime_error("Error opening serial port");
