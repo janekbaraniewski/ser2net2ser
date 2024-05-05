@@ -7,6 +7,8 @@
 #include <mutex>
 #include <condition_variable>
 
+#include "Logger.h"
+
 class SerialPort {
 private:
     int serial_fd;
