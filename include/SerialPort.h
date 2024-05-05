@@ -19,6 +19,7 @@ private:
     std::condition_variable cv;
 
     void readLoop();
+    void configurePort(int baud_rate);
 
 public:
     SerialPort(const std::string& device, int baud_rate);

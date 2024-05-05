@@ -6,15 +6,27 @@
 #include <stdexcept>
 
 SerialPort::SerialPort(const std::string& device, int baud_rate) {
-    Logger(Logger::Level::Info) << "SerialPort init start - device " << device << " - baudRate - " << baud_rate;
+    Logger(Logger::Level::Info) << "SerialPort init start - device " << device << " - baudRate - " << baud_rate << std::endl;
     serial_fd = open(device.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
     if (serial_fd < 0) {
+        Logger(Logger::Level::Error) << "Error opening serial port: " << strerror(errno) << std::endl;
         throw std::runtime_error("Error opening serial port");
     }
 
+    configurePort(baud_rate);
+    Logger(Logger::Level::Info) << "SerialPort init finish" << std::endl;
+}
+
+SerialPort::~SerialPort() {
+    close(serial_fd);
+}
+
+
+void SerialPort::configurePort(int baud_rate) {
     struct termios tty;
     memset(&tty, 0, sizeof tty);
     if (tcgetattr(serial_fd, &tty) != 0) {
+        Logger(Logger::Level::Error) << "Error from tcgetattr: " << strerror(errno) << std::endl;
         throw std::runtime_error("Error from tcgetattr");
     }
 
@@ -23,28 +35,24 @@ SerialPort::SerialPort(const std::string& device, int baud_rate) {
 
     tty.c_cflag |= (CLOCAL | CREAD);
     tty.c_cflag &= ~CSIZE;
-    tty.c_cflag |= CS8;
-    tty.c_cflag &= ~PARENB;
-    tty.c_cflag &= ~CSTOPB;
-    tty.c_cflag &= ~CRTSCTS;
-    tty.c_cflag |= CRTSCTS;
+    tty.c_cflag |= CS8;  // 8-bit chars
+    tty.c_cflag &= ~PARENB; // no parity bit
+    tty.c_cflag &= ~CSTOPB; // only need 1 stop bit
+    tty.c_cflag &= ~CRTSCTS; // no hardware flowcontrol
 
-    // tty.c_iflag |= (IXON | IXOFF | IXANY);
+    // setup for raw input
     tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
     tty.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
     tty.c_oflag &= ~OPOST;
 
-    tty.c_cc[VMIN] = 1;
-    tty.c_cc[VTIME] = 1;
+    // special characters
+    tty.c_cc[VMIN] = 1; // minimum number of characters to read
+    tty.c_cc[VTIME] = 1; // timeout in deciseconds for noncanonical read
 
     if (tcsetattr(serial_fd, TCSANOW, &tty) != 0) {
+        Logger(Logger::Level::Error) << "Error from tcsetattr: " << strerror(errno) << std::endl;
         throw std::runtime_error("Error from tcsetattr");
     }
-    Logger(Logger::Level::Info) << "SerialPort init finish";
-}
-
-SerialPort::~SerialPort() {
-    close(serial_fd);
 }
 
 void SerialPort::writeData(const std::string& data) {
