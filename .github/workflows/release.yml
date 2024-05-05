@@ -44,15 +44,17 @@ jobs:
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_ARCHITECTURE_ID=${{ matrix.config.arch }}
         cmake --build build --config Release
 
-    - name: Rename binary
+    - name: Rename binary using sed and set env
       run: |
-        mv build/ser2net2ser build/ser2net2ser-${{ env.VERSION }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        OS_NAME=$(echo "${{ matrix.config.os }}" | sed 's/ubuntu-latest/linux/; s/macos-latest/darwin/')
+        echo "OS_NAME=$OS_NAME" >> $GITHUB_ENV
+        mv build/ser2net2ser build/ser2net2ser-${{ env.VERSION }}-$OS_NAME-${{ matrix.config.arch }}
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: ser2net2ser-${{ env.VERSION }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
-        path: build/ser2net2ser-${{ env.VERSION }}-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        name: ser2net2ser-${{ env.VERSION }}-${{ env.OS_NAME }}-${{ matrix.config.arch }}
+        path: build/ser2net2ser-${{ env.VERSION }}-${{ env.OS_NAME }}-${{ matrix.config.arch }}
 
   create-release:
     needs: build-and-release
