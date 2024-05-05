@@ -27,6 +27,8 @@ add_library(core_lib
   src/SerialServer.cpp
   src/SerialClient.cpp
   src/VirtualSerialPort.cpp
+  src/SerialPort.cpp
+  src/TCPServer.cpp
 )
 target_include_directories(core_lib PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(core_lib PUBLIC

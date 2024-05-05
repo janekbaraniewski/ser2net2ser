@@ -1,12 +1,15 @@
 #ifndef SERIALSERVER_H
 #define SERIALSERVER_H
 
-#include "RealSerialPort.h"
 #include <string>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <array>
+
+#include "RealSerialPort.h"
+#include "SerialPort.h"
+#include "TCPServer.h"
 
 class SerialServer {
 public:
@@ -16,15 +19,8 @@ public:
     void run();
 
 private:
-    int server_sock;
-    int client_sock;
-    RealSerialPort serial_port_;
-    std::array<char, 1024> buffer_;
-
-    void start_accept();
-    void handle_session(int client_sock);
-    void async_read_socket(int client_sock);
-    void async_read_serial(int client_sock);
+    SerialPort serial_port_;
+    TcpServer server_;
 };
 
 #endif // SERIALSERVER_H
