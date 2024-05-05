@@ -21,7 +21,7 @@ public:
     }
 
     bool connectToServer(const char* server_ip, int server_port) {
-        Logger(Logger::Level::Info) << "Start connecting to socet server:" << server_ip << server_port;
+        Logger(Logger::Level::Info) << "Start connecting to socet server:" << server_ip << ":" << server_port;
         sock_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (sock_fd == -1) {
             Logger(Logger::Level::Error) << "Error creating socket: " << strerror(errno) << std::endl;
