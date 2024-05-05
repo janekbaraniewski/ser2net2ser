@@ -58,6 +58,7 @@ void TcpServer::stop() {
 void TcpServer::handleClient(int client_socket) {
     char buffer[1024];
     Logger(Logger::Level::Info) << "HandleClient start - read thread from serial";
+    serial_.startReading();
     std::thread readThread([&]() {
         while (true) {
             std::string response = serial_.readData(); // This will block until data is available
