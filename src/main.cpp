@@ -4,7 +4,6 @@
 #include "Logger.h"
 #include "SerialClient.h"
 #include "SerialServer.h"
-#include "RealSerialPort.h"
 
 using std::string;
 using std::cout;

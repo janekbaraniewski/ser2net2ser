@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <array>
 
-#include "RealSerialPort.h"
 #include "SerialPort.h"
 #include "TCPServer.h"
 
