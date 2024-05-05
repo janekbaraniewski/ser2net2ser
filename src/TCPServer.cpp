@@ -7,7 +7,7 @@
 #include "TCPServer.h"
 
 TcpServer::TcpServer(int port, SerialPort& serial) : port_(port), is_running_(false), serial_(serial) {
-    Logger(Logger::Level::Info) << "Init tcp server";
+    Logger(Logger::Level::Info) << "Init tcp server on port " << port_;
     if ((server_fd_ = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         throw std::runtime_error("Socket creation failed");
     }
